@@ -251,6 +251,31 @@ class _RegistPageState extends State<RegistPage> {
                             ),
                     ),
                   ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: 248,
+                    height: 38,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: const Text(
+                        'Kembali',
+                        style: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF4B2E2B),
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),

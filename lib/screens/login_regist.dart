@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'register.dart';
+import 'login.dart';
 
 class LoginRegistPage extends StatelessWidget {
   const LoginRegistPage({super.key});
@@ -31,7 +32,10 @@ class LoginRegistPage extends StatelessWidget {
                   // Tombol Masuk
                   GestureDetector(
                     onTap: () {
-                      // Tambahkan rute login page jika ada
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const LoginPage()),
+                      );
                     },
                     child: Container(
                       width: 248,
