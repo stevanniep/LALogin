@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'register.dart';
+import 'login.dart';
 
 class LoginRegist extends StatelessWidget {
   const LoginRegist({super.key});
@@ -29,25 +30,36 @@ class LoginRegist extends StatelessWidget {
                 clipBehavior: Clip.none, // biarkan isi boleh keluar
                 children: [
                   // Tombol Masuk penuh
-                  Container(
-                    width: 248,
-                    height: 38,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF4B2E2B),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    alignment: Alignment.center,
-                    child: const Text(
-                      'Masuk',
-                      style: TextStyle(
-                        fontFamily: 'Poppins',
-                        fontWeight: FontWeight.w600,
-                        fontSize: 15,
-                        color: Colors.white,
+                  GestureDetector(
+                    // <--- Wrap with GestureDetector
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const LoginPage(),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      // <--- Container is now a child of GestureDetector
+                      width: 248,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF4B2E2B),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      alignment: Alignment.center,
+                      child: const Text(
+                        'Masuk',
+                        style: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontWeight: FontWeight.w600,
+                          fontSize: 15,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ),
-
                   // Fingerprint digeser keluar ke kanan
                   Positioned(
                     right: -50, // geser keluar dari batas 248 px

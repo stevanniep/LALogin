@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class RegisterPage extends StatelessWidget {
-  const RegisterPage({super.key});
+class LoginPage extends StatelessWidget {
+  const LoginPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -54,11 +54,11 @@ class RegisterPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 3),
 
-                // ===== Daftar Akun =====
+                // ===== Login Akun =====
                 const Padding(
                   padding: EdgeInsets.only(left: 1),
                   child: Text(
-                    'Daftar Akun',
+                    'Login Akun',
                     style: TextStyle(
                       fontFamily: 'Poppins',
                       fontSize: 30,
@@ -67,26 +67,8 @@ class RegisterPage extends StatelessWidget {
                     ),
                   ),
                 ),
+
                 const SizedBox(height: 38),
-
-                // ===== Nama =====
-                Padding(
-                  padding: const EdgeInsets.only(left: 1),
-                  child: Text('Nama', style: labelStyle),
-                ),
-                const SizedBox(height: 6),
-                SizedBox(
-                  width: 248,
-                  height: 28,
-                  child: TextField(
-                    style: labelStyle,
-                    decoration: inputDecoration.copyWith(
-                      hintText: 'Ketik nama lengkap anda',
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 16),
 
                 // ===== Email =====
                 Padding(
@@ -130,34 +112,9 @@ class RegisterPage extends StatelessWidget {
                   ),
                 ),
 
-                const SizedBox(height: 16),
+                const SizedBox(height: 38),
 
-                // ===== Konfirmasi Password =====
-                Padding(
-                  padding: const EdgeInsets.only(left: 1),
-                  child: Text('Konfirmasi Password', style: labelStyle),
-                ),
-                const SizedBox(height: 6),
-                SizedBox(
-                  width: 248,
-                  height: 28,
-                  child: TextField(
-                    obscureText: true,
-                    style: labelStyle,
-                    decoration: inputDecoration.copyWith(
-                      hintText: 'Ketik ulang  Password anda',
-                      suffixIcon: const Icon(
-                        Icons.visibility_off,
-                        color: Color(0xFF4B2E2B),
-                        size: 20,
-                      ),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 32),
-
-                // ===== Tombol Daftar =====
+                // ===== Tombol Login =====
                 SizedBox(
                   width: 248,
                   height: 38,
@@ -172,7 +129,7 @@ class RegisterPage extends StatelessWidget {
                       ),
                     ),
                     child: const Text(
-                      'Daftar',
+                      'Login',
                       style: TextStyle(
                         fontFamily: 'Poppins',
                         fontSize: 15,
@@ -182,6 +139,7 @@ class RegisterPage extends StatelessWidget {
                     ),
                   ),
                 ),
+
                 const SizedBox(height: 16),
                 // ===== Tombol Kembali =====
                 SizedBox(
