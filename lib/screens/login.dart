@@ -1,11 +1,68 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../pages/home_page.dart';
 
-class LoginPage extends StatelessWidget {
+class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
   @override
+  State<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _isLoading = false;
+
+  Future<void> _login() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Email dan password wajib diisi')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final response = await Supabase.instance.client.auth.signInWithPassword(
+        email: email,
+        password: password,
+      );
+
+      if (!mounted) return;
+
+      if (response.session != null) {
+        // Sukses login, arahkan ke halaman utama
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const HomePage()),
+        );
+      } else {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Gagal login')));
+      }
+    } on AuthException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.message)));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Terjadi kesalahan')));
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // Gaya teks label
     final labelStyle = const TextStyle(
       fontFamily: 'Poppins',
       fontSize: 13,
@@ -13,7 +70,6 @@ class LoginPage extends StatelessWidget {
       color: Colors.black,
     );
 
-    // Gaya teks placeholder
     final placeholderStyle = const TextStyle(
       fontFamily: 'Poppins',
       fontSize: 10,
@@ -21,10 +77,9 @@ class LoginPage extends StatelessWidget {
       color: Color.fromRGBO(0, 0, 0, 0.4),
     );
 
-    // Dekorasi input box
     final inputDecoration = InputDecoration(
       filled: true,
-      fillColor: const Color(0x334B2E2B), // Warna 20%
+      fillColor: const Color(0x334B2E2B),
       hintStyle: placeholderStyle,
       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       border: OutlineInputBorder(
@@ -34,7 +89,7 @@ class LoginPage extends StatelessWidget {
     );
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5DC), // krem
+      backgroundColor: const Color(0xFFF5F5DC),
       body: Align(
         alignment: Alignment.topCenter,
         child: SingleChildScrollView(
@@ -44,7 +99,6 @@ class LoginPage extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ===== Selamat Datang =====
                 Padding(
                   padding: const EdgeInsets.only(left: 1),
                   child: Text(
@@ -53,8 +107,6 @@ class LoginPage extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 3),
-
-                // ===== Login Akun =====
                 const Padding(
                   padding: EdgeInsets.only(left: 1),
                   child: Text(
@@ -67,10 +119,7 @@ class LoginPage extends StatelessWidget {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 38),
-
-                // ===== Email =====
                 Padding(
                   padding: const EdgeInsets.only(left: 1),
                   child: Text('E-mail', style: labelStyle),
@@ -80,16 +129,14 @@ class LoginPage extends StatelessWidget {
                   width: 248,
                   height: 28,
                   child: TextField(
+                    controller: _emailController,
                     style: labelStyle,
                     decoration: inputDecoration.copyWith(
                       hintText: 'Ketik e-mail anda',
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 16),
-
-                // ===== Password =====
                 Padding(
                   padding: const EdgeInsets.only(left: 1),
                   child: Text('Password', style: labelStyle),
@@ -99,6 +146,7 @@ class LoginPage extends StatelessWidget {
                   width: 248,
                   height: 28,
                   child: TextField(
+                    controller: _passwordController,
                     obscureText: true,
                     style: labelStyle,
                     decoration: inputDecoration.copyWith(
@@ -111,37 +159,32 @@ class LoginPage extends StatelessWidget {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 38),
-
-                // ===== Tombol Login =====
                 SizedBox(
                   width: 248,
                   height: 38,
                   child: ElevatedButton(
-                    onPressed: () {
-                      // TODO: Tambahkan logika submit di sini
-                    },
+                    onPressed: _isLoading ? null : _login,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF4B2E2B),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
                     ),
-                    child: const Text(
-                      'Login',
-                      style: TextStyle(
-                        fontFamily: 'Poppins',
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
+                    child: _isLoading
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : const Text(
+                            'Login',
+                            style: TextStyle(
+                              fontFamily: 'Poppins',
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
                   ),
                 ),
-
                 const SizedBox(height: 16),
-                // ===== Tombol Kembali =====
                 SizedBox(
                   width: 248,
                   height: 38,
