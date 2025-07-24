@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../pages/home_page.dart';
+import '../pages/admin_home.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -13,6 +14,14 @@ class _LoginPageState extends State<LoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+  bool _obscureText = true; // State baru untuk mengontrol visibilitas password
+
+  // Fungsi untuk mengubah visibilitas password
+  void _togglePasswordVisibility() {
+    setState(() {
+      _obscureText = !_obscureText;
+    });
+  }
 
   Future<void> _login() async {
     final email = _emailController.text.trim();
@@ -33,14 +42,49 @@ class _LoginPageState extends State<LoginPage> {
         password: password,
       );
 
+      final user = Supabase.instance.client.auth.currentUser;
+
+      if (user == null) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('User tidak ditemukan. Silakan login ulang.'),
+          ),
+        );
+        return;
+      }
+
+      final profileResponse = await Supabase.instance.client
+          .from('profiles')
+          .select('role')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
       if (!mounted) return;
 
-      if (response.session != null) {
-        // Sukses login, arahkan ke halaman utama
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const HomePage()),
+      if (profileResponse == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Profil tidak ditemukan.')),
         );
+        return;
+      }
+
+      final role = profileResponse['role'];
+
+      if (!mounted) return; // ✅ Cukup satu guard mounted setelah async selesai
+
+      if (response.session != null) {
+        if (role == 'Admin') {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const AdminHomePage()),
+          );
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const HomePage()),
+          );
+        }
       } else {
         ScaffoldMessenger.of(
           context,
@@ -51,11 +95,13 @@ class _LoginPageState extends State<LoginPage> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(e.message)));
-    } catch (e) {
+    } catch (e, stack) {
       if (!mounted) return;
+      debugPrint('Unexpected error: $e');
+      debugPrint('Stack trace: $stack');
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Terjadi kesalahan')));
+      ).showSnackBar(SnackBar(content: Text('Terjadi kesalahan: $e')));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -86,6 +132,8 @@ class _LoginPageState extends State<LoginPage> {
         borderRadius: BorderRadius.circular(5),
         borderSide: BorderSide.none,
       ),
+      // Mengubah warna kursor menjadi hitam
+      // cursorColor: Colors.black, // Ini akan diterapkan pada TextField
     );
 
     return Scaffold(
@@ -130,7 +178,9 @@ class _LoginPageState extends State<LoginPage> {
                   height: 28,
                   child: TextField(
                     controller: _emailController,
-                    style: labelStyle,
+                    // Mengubah ukuran font untuk input email menjadi 12
+                    style: labelStyle.copyWith(fontSize: 12),
+                    cursorColor: Colors.black, // Kursor warna hitam untuk email
                     decoration: inputDecoration.copyWith(
                       hintText: 'Ketik e-mail anda',
                     ),
@@ -147,14 +197,23 @@ class _LoginPageState extends State<LoginPage> {
                   height: 28,
                   child: TextField(
                     controller: _passwordController,
-                    obscureText: true,
-                    style: labelStyle,
+                    obscureText: _obscureText, // Menggunakan state _obscureText
+                    // Mengubah ukuran font untuk input password menjadi 12
+                    style: labelStyle.copyWith(fontSize: 12),
+                    cursorColor:
+                        Colors.black, // Kursor warna hitam untuk password
                     decoration: inputDecoration.copyWith(
                       hintText: 'Ketik Password anda',
-                      suffixIcon: const Icon(
-                        Icons.visibility_off,
-                        color: Color(0xFF4B2E2B),
-                        size: 20,
+                      suffixIcon: GestureDetector(
+                        onTap:
+                            _togglePasswordVisibility, // Panggil fungsi toggle
+                        child: Icon(
+                          _obscureText
+                              ? Icons.visibility_off
+                              : Icons.visibility,
+                          color: const Color(0xFF4B2E2B),
+                          size: 16, // Ukuran ikon 16
+                        ),
                       ),
                     ),
                   ),
