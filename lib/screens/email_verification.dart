@@ -3,8 +3,13 @@ import 'login_regist.dart'; // asumsikan kamu sudah punya file ini
 
 class EmailVerificationNoticePage extends StatelessWidget {
   final String email;
+  final String fullName;
 
-  const EmailVerificationNoticePage({super.key, required this.email});
+  const EmailVerificationNoticePage({
+    super.key,
+    required this.email,
+    required this.fullName,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +24,7 @@ class EmailVerificationNoticePage extends StatelessWidget {
               const Icon(Icons.email_outlined, size: 80, color: Colors.brown),
               const SizedBox(height: 24),
               Text(
-                'Kami telah mengirim link verifikasi ke email:\n$email\n\nSilakan periksa dan klik link tersebut untuk mengaktifkan akun.',
+                'Halo $fullName,\nKami telah mengirim link verifikasi ke email:\n$email\n\nSilakan periksa dan klik link tersebut untuk mengaktifkan akun.',
                 textAlign: TextAlign.center,
                 style: const TextStyle(fontFamily: 'Poppins', fontSize: 14),
               ),
