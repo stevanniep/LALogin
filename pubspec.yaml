@@ -62,6 +62,7 @@ flutter:
     - assets/fingerprint.png
     - assets/icons/
     - assets/images/
+    - assets/adm/
 
   fonts:
     - family: Poppins
