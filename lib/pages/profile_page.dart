@@ -25,8 +25,14 @@ class _ProfilePageState extends State<ProfilePage> {
               // card profile
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-                margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 24,
+                ),
+                margin: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFF4B2E2B),
                   borderRadius: BorderRadius.circular(10),
@@ -36,7 +42,9 @@ class _ProfilePageState extends State<ProfilePage> {
                     const SizedBox(width: 20),
                     const CircleAvatar(
                       radius: 45,
-                      backgroundImage: AssetImage('assets/images/photoprofile.png'),
+                      backgroundImage: AssetImage(
+                        'assets/images/photoprofile.png',
+                      ),
                     ),
                     const SizedBox(width: 20),
                     Column(
@@ -44,79 +52,91 @@ class _ProfilePageState extends State<ProfilePage> {
                       children: const [
                         Text(
                           'NAMA SAYA SIAPA YA',
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         SizedBox(height: 4),
-                        Text('Asisten', style: TextStyle(color: Colors.white70)),
+                        Text(
+                          'Asisten',
+                          style: TextStyle(color: Colors.white70),
+                        ),
                         SizedBox(height: 4),
-                        Text('saya@gmail.com', style: TextStyle(color: Colors.white70)),
+                        Text(
+                          'saya@gmail.com',
+                          style: TextStyle(color: Colors.white70),
+                        ),
                         SizedBox(height: 4),
-                        Text('101012340000', style: TextStyle(color: Colors.white70)),
+                        Text(
+                          '101012340000',
+                          style: TextStyle(color: Colors.white70),
+                        ),
                       ],
-                    )
+                    ),
                   ],
                 ),
               ),
 
-            // Login Biometrik
-            _buildCard(
-            icon: 'biometrik.png',
-            label: 'Login Biometrik',
-            trailing: Switch(
-                value: isBiometricEnabled,
-                activeColor: const Color(0xFF4B2E2B),
-                inactiveThumbColor: Colors.grey,
-                inactiveTrackColor: Colors.grey.shade300,
-                onChanged: (val) {
-                setState(() {
-                    isBiometricEnabled = val;
-                });
-                if (val) {
-                    Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const FaceIDPage()),
-                    );
-                }
-                },
-            ),
-            ),
+              // Login Biometrik
+              _buildCard(
+                icon: 'biometrik.png',
+                label: 'Login Biometrik',
+                trailing: Switch(
+                  value: isBiometricEnabled,
+                  activeColor: const Color(0xFF4B2E2B),
+                  inactiveThumbColor: Colors.grey,
+                  inactiveTrackColor: Colors.grey.shade300,
+                  onChanged: (val) {
+                    setState(() {
+                      isBiometricEnabled = val;
+                    });
+                    if (val) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const FaceIDPage()),
+                      );
+                    }
+                  },
+                ),
+              ),
 
-            // Kehadiran
-            _buildCard(
+              // Kehadiran
+              _buildCard(
                 icon: 'kehadiran.png',
                 label: 'Kehadiran',
                 trailing: const Text("100%"),
-            ),
+              ),
 
-            // Aktivitas
-            _buildCard(
+              // Aktivitas
+              _buildCard(
                 icon: 'aktivitas.png',
                 label: 'Aktivitas',
                 child: SizedBox(height: 150, child: _buildActivityChart()),
-            ),
+              ),
 
-            // Edit Profil
-            _buildCard(
-            icon: 'edit_profil.png',
-            label: 'Edit Profil',
-            onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const EditProfilePage()),
-            ),
-            ),
+              // Edit Profil
+              _buildCard(
+                icon: 'edit_profil.png',
+                label: 'Edit Profil',
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const EditProfilePage()),
+                ),
+              ),
 
-            // Logout
-            _buildCard(
-            icon: 'logout.png',
-            label: 'Logout',
-            onTap: () {
-                Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (_) => const LoginRegistPage()),
-                (route) => false,
-                );
-            },
-            ),
+              // Logout
+              _buildCard(
+                icon: 'logout.png',
+                label: 'Logout',
+                onTap: () {
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (_) => const LoginRegistPage()),
+                    (route) => false,
+                  );
+                },
+              ),
 
               const SizedBox(height: 16),
               const Text(
@@ -162,24 +182,20 @@ class _ProfilePageState extends State<ProfilePage> {
               children: [
                 Row(
                   children: [
-                    Image.asset(
-                      'assets/icons/$icon',
-                      width: 24,
-                      height: 24,
-                    ),
+                    Image.asset('assets/icons/$icon', width: 24, height: 24),
                     const SizedBox(width: 12),
                     Text(
                       label,
-                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                     const Spacer(),
                     if (trailing != null) trailing,
                   ],
                 ),
-                if (child != null) ...[
-                  const SizedBox(height: 12),
-                  child,
-                ],
+                if (child != null) ...[const SizedBox(height: 12), child],
               ],
             ),
           ),
@@ -216,10 +232,7 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
             ),
             const SizedBox(height: 6),
-            Text(
-              days[i],
-              style: const TextStyle(fontSize: 10),
-            )
+            Text(days[i], style: const TextStyle(fontSize: 10)),
           ],
         );
       }),
