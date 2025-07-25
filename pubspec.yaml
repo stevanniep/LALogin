@@ -60,6 +60,9 @@ flutter:
     - assets/logo.png
     - assets/logo_lab.png
     - assets/fingerprint.png
+    - assets/icons/
+    - assets/images/
+
   fonts:
     - family: Poppins
       fonts:

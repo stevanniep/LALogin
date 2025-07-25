@@ -51,22 +51,52 @@ class _RegistPageState extends State<RegistPage> {
 
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
+    final fullName = _namaController.text
+        .trim(); // Ambil nama lengkap dari controller
 
     try {
-      await Supabase.instance.client.auth.signUp(
+      final AuthResponse response = await Supabase.instance.client.auth.signUp(
         email: email,
         password: password,
         emailRedirectTo: 'myapp://login-callback',
       );
 
-      if (!mounted) return;
+      // Pastikan pendaftaran user di auth.users berhasil dan ada user ID
+      if (response.user != null) {
+        final userId = response.user!.id;
+        debugPrint('User ID from Auth: $userId');
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => EmailVerificationNoticePage(email: email),
-        ),
-      );
+        // --- LOKASI UNTUK MENYIMPAN DATA NAMA KE TABEL PROFILES ---
+        await Supabase.instance.client.from('profiles').insert({
+          'user_id': userId,
+          'full_name': fullName,
+          'role': 'Pengguna', // Beri peran default, misalnya 'User'
+          'email': email, // Bisa juga simpan email di profiles
+          // 'nim': null, // Jika ada kolom nim dan tidak diisi saat registrasi
+          // 'created_at': DateTime.now().toIso8601String(), // Supabase sering mengisi otomatis jika kolom default
+        });
+
+        if (!mounted) return; // Pastikan widget masih ada sebelum navigasi
+
+        // Navigasi ke halaman verifikasi email
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => EmailVerificationNoticePage(
+              email: email,
+              fullName: fullName, // Kirimkan nama lengkap ke halaman verifikasi
+            ),
+          ),
+        );
+      } else {
+        // Ini adalah skenario jarang, di mana signUp berhasil tapi user object null
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Pendaftaran berhasil, tapi user tidak ditemukan.'),
+          ),
+        );
+      }
     } on AuthException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -74,9 +104,12 @@ class _RegistPageState extends State<RegistPage> {
       ).showSnackBar(SnackBar(content: Text(e.message)));
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Terjadi kesalahan")));
+      debugPrint(
+        'Error saat pendaftaran atau menyimpan profil: $e',
+      ); // Debugging error lebih spesifik
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Terjadi kesalahan tak terduga.")),
+      );
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
