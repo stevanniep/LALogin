@@ -18,9 +18,7 @@ class AdminBeranda extends StatelessWidget {
                   width: 330,
                   height: 136,
                   padding: const EdgeInsets.all(16),
-                  margin: const EdgeInsets.only(
-                    top: 40,
-                  ), // agar sedikit turun dari atas
+                  margin: const EdgeInsets.only(top: 40),
                   decoration: BoxDecoration(
                     color: const Color(0xFF4B2E2B), // warna coklat tua
                     borderRadius: BorderRadius.circular(16),
