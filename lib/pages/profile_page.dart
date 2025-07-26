@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'edit_profile_page.dart';
 import 'faceid_page.dart';
 import '../screens/login_regist.dart';
@@ -15,6 +16,12 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    final user = Supabase.instance.client.auth.currentUser;
+    final email = user?.email ?? '-';
+    final displayNameRaw = user?.userMetadata?['display_name'] ?? (email.contains('@') ? email.split('@')[0] : 'Pengguna');
+    final displayName = displayNameRaw;
+    final phone = user?.userMetadata?['phone'] ?? '-';
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -22,63 +29,59 @@ class _ProfilePageState extends State<ProfilePage> {
           padding: const EdgeInsets.only(bottom: 24),
           child: Column(
             children: [
-              // card profile
+              // profile card
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 24,
-                ),
-                margin: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 16,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+                margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                 decoration: BoxDecoration(
                   color: const Color(0xFF4B2E2B),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(
                   children: [
-                    const SizedBox(width: 20),
                     const CircleAvatar(
                       radius: 45,
-                      backgroundImage: AssetImage(
-                        'assets/images/photoprofile.png',
-                      ),
+                      backgroundImage: AssetImage('assets/images/photoprofile.png'),
                     ),
                     const SizedBox(width: 20),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
-                        Text(
-                          'NAMA SAYA SIAPA YA',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            displayName,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          'Asisten',
-                          style: TextStyle(color: Colors.white70),
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          'saya@gmail.com',
-                          style: TextStyle(color: Colors.white70),
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          '101012340000',
-                          style: TextStyle(color: Colors.white70),
-                        ),
-                      ],
+                          const SizedBox(height: 4),
+                          const Text(
+                            'Asisten',
+                            style: TextStyle(color: Colors.white70),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            email,
+                            style: const TextStyle(color: Colors.white70),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            phone,
+                            style: const TextStyle(color: Colors.white70),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
               ),
 
-              // Login Biometrik
+              // biometric
               _buildCard(
                 icon: 'biometrik.png',
                 label: 'Login Biometrik',
@@ -88,9 +91,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   inactiveThumbColor: Colors.grey,
                   inactiveTrackColor: Colors.grey.shade300,
                   onChanged: (val) {
-                    setState(() {
-                      isBiometricEnabled = val;
-                    });
+                    setState(() => isBiometricEnabled = val);
                     if (val) {
                       Navigator.push(
                         context,
@@ -101,21 +102,18 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
               ),
 
-              // Kehadiran
               _buildCard(
                 icon: 'kehadiran.png',
                 label: 'Kehadiran',
                 trailing: const Text("100%"),
               ),
 
-              // Aktivitas
               _buildCard(
                 icon: 'aktivitas.png',
                 label: 'Aktivitas',
                 child: SizedBox(height: 150, child: _buildActivityChart()),
               ),
 
-              // Edit Profil
               _buildCard(
                 icon: 'edit_profil.png',
                 label: 'Edit Profil',
@@ -125,11 +123,11 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
               ),
 
-              // Logout
               _buildCard(
                 icon: 'logout.png',
                 label: 'Logout',
                 onTap: () {
+                  Supabase.instance.client.auth.signOut();
                   Navigator.pushAndRemoveUntil(
                     context,
                     MaterialPageRoute(builder: (_) => const LoginRegistPage()),
