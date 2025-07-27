@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'admin_tambah_jadwal.dart';
 
 class AdminBeranda extends StatelessWidget {
   const AdminBeranda({super.key});
@@ -109,20 +110,34 @@ class AdminBeranda extends StatelessWidget {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       crossAxisAlignment: CrossAxisAlignment.center,
-                      children: const [
+                      children: [
                         _MenuIcon(
                           iconPath: 'assets/adm/tambah.png',
                           label: 'Tambah\nJadwal',
+                          onTap: () async {
+                            final result = await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const TambahJadwalPage(),
+                              ),
+                            );
+
+                            if (result != null &&
+                                result is Map<String, String>) {
+                              // Lakukan sesuatu dengan data jadwal (opsional)
+                              print("Jadwal baru: $result");
+                            }
+                          },
                         ),
-                        _MenuIcon(
+                        const _MenuIcon(
                           iconPath: 'assets/adm/qr.png',
                           label: 'Membuat\nPresensi',
                         ),
-                        _MenuIcon(
+                        const _MenuIcon(
                           iconPath: 'assets/adm/data.png',
                           label: 'Data\nAsisten',
                         ),
-                        _MenuIcon(
+                        const _MenuIcon(
                           iconPath: 'assets/adm/proyek.png',
                           label: 'Tambah\nProyek',
                         ),
@@ -143,35 +158,39 @@ class AdminBeranda extends StatelessWidget {
 class _MenuIcon extends StatelessWidget {
   final String iconPath;
   final String label;
+  final VoidCallback? onTap;
 
-  const _MenuIcon({required this.iconPath, required this.label});
+  const _MenuIcon({required this.iconPath, required this.label, this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: Color(0xFFD9D9D9),
-            borderRadius: BorderRadius.circular(8),
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: const Color(0xFFD9D9D9),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Center(child: Image.asset(iconPath, width: 24, height: 24)),
           ),
-          child: Center(child: Image.asset(iconPath, width: 24, height: 24)),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          label,
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontFamily: 'Poppins',
-            fontWeight: FontWeight.w500,
-            fontSize: 11,
-            color: Colors.black,
+          const SizedBox(height: 6),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontFamily: 'Poppins',
+              fontWeight: FontWeight.w500,
+              fontSize: 11,
+              color: Colors.black,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

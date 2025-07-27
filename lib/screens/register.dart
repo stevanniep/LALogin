@@ -11,6 +11,8 @@ class RegistPage extends StatefulWidget {
 
 class _RegistPageState extends State<RegistPage> {
   final _formKey = GlobalKey<FormState>();
+  final _usernameController = TextEditingController();
+  String? _usernameError;
   final _namaController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -25,8 +27,25 @@ class _RegistPageState extends State<RegistPage> {
   String? _passwordError;
   String? _confirmPasswordError;
 
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _namaController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
+
   Future<void> _signUp() async {
     setState(() {
+      final usernameRegex = RegExp(r'^[a-z0-9_]{3,20}$');
+      _usernameError = _usernameController.text.isEmpty
+          ? 'Wajib diisi'
+          : (!usernameRegex.hasMatch(_usernameController.text)
+                ? 'Gunakan huruf kecil, angka, dan _ (3-20 karakter)'
+                : null);
+      _usernameError = _usernameController.text.isEmpty ? 'Wajib diisi' : null;
       _namaError = _namaController.text.isEmpty ? 'Wajib diisi' : null;
       _emailError = !_emailController.text.contains('@')
           ? 'Masukkan email yang valid'
@@ -40,7 +59,8 @@ class _RegistPageState extends State<RegistPage> {
           : null;
     });
 
-    if (_namaError != null ||
+    if (_usernameError != null ||
+        _namaError != null ||
         _emailError != null ||
         _passwordError != null ||
         _confirmPasswordError != null) {
@@ -49,6 +69,7 @@ class _RegistPageState extends State<RegistPage> {
 
     setState(() => _isLoading = true);
 
+    final username = _usernameController.text.trim();
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
     final fullName = _namaController.text
@@ -66,9 +87,22 @@ class _RegistPageState extends State<RegistPage> {
         final userId = response.user!.id;
         debugPrint('User ID from Auth: $userId');
 
+        final existingUser = await Supabase.instance.client
+            .from('profiles')
+            .select()
+            .eq('username', username)
+            .maybeSingle();
+
+        if (existingUser != null) {
+          setState(() => _usernameError = 'Username sudah digunakan');
+          setState(() => _isLoading = false);
+          return;
+        }
+
         // --- LOKASI UNTUK MENYIMPAN DATA NAMA KE TABEL PROFILES ---
         await Supabase.instance.client.from('profiles').insert({
           'user_id': userId,
+          'username': username,
           'full_name': fullName,
           'role': 'Pengguna', // Beri peran default, misalnya 'User'
           'email': email, // Bisa juga simpan email di profiles
@@ -224,6 +258,13 @@ class _RegistPageState extends State<RegistPage> {
                     hint: 'Ketik nama lengkap anda',
                     controller: _namaController,
                     error: _namaError,
+                  ),
+
+                  buildFormInput(
+                    label: 'Username',
+                    hint: 'Ketik username anda',
+                    controller: _usernameController,
+                    error: _usernameError,
                   ),
 
                   buildFormInput(
