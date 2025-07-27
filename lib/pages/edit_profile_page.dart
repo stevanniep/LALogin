@@ -1,18 +1,44 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'home_page.dart';
 
-class EditProfilePage extends StatelessWidget {
+class EditProfilePage extends StatefulWidget {
   const EditProfilePage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    const inputDecoration = InputDecoration(
-      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      filled: true,
-      fillColor: Color(0xFFF0F0F0),
-      border: OutlineInputBorder(borderSide: BorderSide.none),
-    );
+  State<EditProfilePage> createState() => _EditProfilePageState();
+}
 
+class _EditProfilePageState extends State<EditProfilePage> {
+  final usernameController = TextEditingController();
+  final emailController = TextEditingController();
+  final phoneController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    final user = Supabase.instance.client.auth.currentUser;
+
+    final email = user?.email ?? '';
+    final defaultDisplay = email.contains('@') ? email.split('@')[0] : 'Pengguna';
+    final displayName = user?.userMetadata?['display_name'] ?? defaultDisplay;
+    final phone = user?.userMetadata?['phone'] ?? '-';
+
+    usernameController.text = displayName;
+    emailController.text = email;
+    phoneController.text = phone;
+  }
+
+  @override
+  void dispose() {
+    usernameController.dispose();
+    emailController.dispose();
+    phoneController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     double horizontalPadding = MediaQuery.of(context).size.width / 2 - 124;
 
     return Scaffold(
@@ -26,14 +52,30 @@ class EditProfilePage extends StatelessWidget {
         ),
         title: const Text("Edit Profil", style: TextStyle(color: Colors.black)),
       ),
-      body: Padding(
-        padding: const EdgeInsets.only(top: 50),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.only(top: 50, bottom: 24),
         child: Column(
           children: [
-            _buildField(label: 'Nama', hint: 'Masukkan nama anda', paddingLeft: horizontalPadding),
-            _buildField(label: 'Role', hint: 'Asisten Praktikum', paddingLeft: horizontalPadding),
-            _buildField(label: 'Email', hint: 'nama@email.com', paddingLeft: horizontalPadding),
-            _buildField(label: 'NIM', hint: '10101000000', paddingLeft: horizontalPadding),
+            _buildField(
+              label: 'Username',
+              controller: usernameController,
+              hint: 'Masukkan nama anda',
+              paddingLeft: horizontalPadding,
+              maxLength: 15,
+            ),
+            _buildField(
+              label: 'Email',
+              controller: emailController,
+              hint: 'nama@email.com',
+              paddingLeft: horizontalPadding,
+              readOnly: true,
+            ),
+            _buildField(
+              label: 'No. Telepon',
+              controller: phoneController,
+              hint: '08XXXXXXXXXX',
+              paddingLeft: horizontalPadding,
+            ),
             const SizedBox(height: 32),
             SizedBox(
               width: 248,
@@ -43,13 +85,7 @@ class EditProfilePage extends StatelessWidget {
                   backgroundColor: const Color(0xFF4B2E2B),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
-                onPressed: () {
-                    Navigator.pushAndRemoveUntil(
-                      context,
-                      MaterialPageRoute(builder: (_) => HomePage(initialIndex: 4)),
-                      (route) => false,
-                    );
-                  },
+                onPressed: _saveProfile,
                 child: const Text("Simpan", style: TextStyle(color: Colors.white)),
               ),
             ),
@@ -61,8 +97,11 @@ class EditProfilePage extends StatelessWidget {
 
   Widget _buildField({
     required String label,
+    required TextEditingController controller,
     required String hint,
     required double paddingLeft,
+    bool readOnly = false,
+    int? maxLength,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
@@ -80,18 +119,56 @@ class EditProfilePage extends StatelessWidget {
             width: 248,
             height: 28,
             child: TextField(
+              controller: controller,
+              readOnly: readOnly,
+              maxLength: maxLength,
               style: const TextStyle(fontSize: 12),
               decoration: InputDecoration(
                 hintText: hint,
+                counterText: '',
                 contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 filled: true,
                 fillColor: const Color(0xFFF0F0F0),
-                border: OutlineInputBorder(borderSide: BorderSide.none),
+                border: const OutlineInputBorder(borderSide: BorderSide.none),
               ),
             ),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _saveProfile() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    final newName = usernameController.text.trim();
+    final newPhone = phoneController.text.trim();
+
+    if (user != null) {
+      try {
+        await Supabase.instance.client.auth.updateUser(
+          UserAttributes(
+            data: {
+              'display_name': newName,
+              'phone': newPhone,
+            },
+          ),
+        );
+
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Profil berhasil disimpan')),
+        );
+
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const HomePage(initialIndex: 4)),
+          (route) => false,
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal menyimpan: ${e.toString()}')),
+        );
+      }
+    }
   }
 }
