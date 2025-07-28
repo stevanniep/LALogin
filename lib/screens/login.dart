@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../pages/home_page.dart';
-import '../pages/admin_home.dart';
+import '../admin/admin_navbar.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});

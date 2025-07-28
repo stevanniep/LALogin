@@ -1,20 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import '../screens/login_regist.dart';
-import 'project_page.dart';
-import 'scan_page.dart';
-import 'forum_page.dart';
-import 'profile_page.dart';
+import '../admin/admin_beranda.dart';
+import '../admin/admin_project.dart';
+import '../admin/admin_activity.dart';
+import '../admin/admin_forum.dart';
+import '../admin/admin_profile.dart';
 
-class HomePage extends StatefulWidget {
+class AdminHomePage extends StatefulWidget {
   final int initialIndex;
-  const HomePage({super.key, this.initialIndex = 0});
+  const AdminHomePage({super.key, this.initialIndex = 0});
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  State<AdminHomePage> createState() => _AdminHomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _AdminHomePageState extends State<AdminHomePage> {
   late int _selectedIndex;
 
   @override
@@ -23,24 +22,28 @@ class _HomePageState extends State<HomePage> {
     _selectedIndex = widget.initialIndex;
   }
 
-  Future<void> _signOut() async {
-    await Supabase.instance.client.auth.signOut();
-    if (!mounted) return;
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (_) => const LoginRegistPage()),
-      (route) => false,
-    );
-  }
+  late final List<Widget> _pages = const [
+    AdminBeranda(),
+    AdminProjectPage(),
+    AdminActivityPage(), // Ganti ScanPage dengan ActivityPage
+    AdminForumPage(),
+    AdminProfilePage(),
+  ];
 
-  final List<String> _titles = ['Beranda', 'Proyek', 'Scan', 'Forum', 'Profil'];
+  final List<String> _labels = [
+    'Beranda',
+    'Proyek',
+    'Aktifitas',
+    'Forum',
+    'Profil',
+  ];
 
-  late final List<Widget> _pages = [
-    _buildHomeScreen(),
-    const ProjectPage(),
-    const ScanPage(),
-    const ForumPage(),
-    const ProfilePage(),
+  final List<List<String>> _iconPaths = [
+    ['home.png', 'home_active.png'],
+    ['project.png', 'project_active.png'],
+    ['activity.png', 'activity_aktif.png'], // <- diubah
+    ['forum.png', 'forum_active.png'],
+    ['profile.png', 'profile_active.png'],
   ];
 
   @override
@@ -62,19 +65,9 @@ class _HomePageState extends State<HomePage> {
         child: Row(
           children: List.generate(5, (index) {
             final isSelected = _selectedIndex == index;
-
-            final iconNames = [
-              ['home.png', 'home_active.png'],
-              ['project.png', 'project_active.png'],
-              ['scan.png', 'scan_active.png'],
-              ['forum.png', 'forum_active.png'],
-              ['profile.png', 'profile_active.png'],
-            ];
-
-            final labels = ['Beranda', 'Proyek', 'Scan', 'Forum', 'Profil'];
             final iconPath = isSelected
-                ? 'assets/icons/${iconNames[index][1]}'
-                : 'assets/icons/${iconNames[index][0]}';
+                ? 'assets/icons/${_iconPaths[index][1]}'
+                : 'assets/icons/${_iconPaths[index][0]}';
 
             return Expanded(
               child: GestureDetector(
@@ -85,18 +78,18 @@ class _HomePageState extends State<HomePage> {
                     Container(
                       height: 4,
                       color: isSelected
-                          ? const Color(0xFF5E4036)
+                          ? const Color(0xFF4B2E2B)
                           : Colors.transparent,
                     ),
                     const SizedBox(height: 8),
                     Image.asset(iconPath, width: 24, height: 24),
                     const SizedBox(height: 4),
                     Text(
-                      labels[index],
+                      _labels[index],
                       style: TextStyle(
                         fontSize: 12,
                         color: isSelected
-                            ? const Color(0xFF5E4036)
+                            ? const Color(0xFF4B2E2B)
                             : Colors.grey,
                         fontWeight: isSelected
                             ? FontWeight.w600
@@ -110,17 +103,6 @@ class _HomePageState extends State<HomePage> {
             );
           }),
         ),
-      ),
-    );
-  }
-
-  Widget _buildHomeScreen() {
-    final userEmail =
-        Supabase.instance.client.auth.currentUser?.email ?? 'Pengguna';
-    return Center(
-      child: Text(
-        'Selamat datang, $userEmail!',
-        style: const TextStyle(fontSize: 20),
       ),
     );
   }
