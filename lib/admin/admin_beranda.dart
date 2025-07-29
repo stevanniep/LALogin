@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'admin_tambah_jadwal.dart';
+import 'admin_tambah_proyek.dart'; // pastikan nama file sesuai dengan nama file kamu
 
 class AdminBeranda extends StatelessWidget {
   const AdminBeranda({super.key});
@@ -137,9 +138,23 @@ class AdminBeranda extends StatelessWidget {
                           iconPath: 'assets/adm/data.png',
                           label: 'Data\nAsisten',
                         ),
-                        const _MenuIcon(
+                        _MenuIcon(
                           iconPath: 'assets/adm/proyek.png',
                           label: 'Tambah\nProyek',
+                          onTap: () async {
+                            final result = await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const TambahProyekPage(),
+                              ),
+                            );
+
+                            if (result != null &&
+                                result is Map<String, String>) {
+                              // Lakukan sesuatu dengan data proyek (opsional)
+                              print("Proyek baru: $result");
+                            }
+                          },
                         ),
                       ],
                     ),
