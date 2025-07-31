@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'admin_navbar.dart';
+import 'admin_navbar.dart'; // Pastikan path ini benar
 
 class TambahJadwalPage extends StatefulWidget {
   const TambahJadwalPage({super.key});
@@ -52,7 +52,7 @@ class _TambahJadwalPageState extends State<TambahJadwalPage> {
                       );
                     },
                     child: Image.asset(
-                      'assets/icons/kembali.png',
+                      'assets/icons/kembali.png', // Pastikan path aset ini benar
                       width: 24,
                       height: 24,
                     ),
@@ -125,6 +125,7 @@ class _TambahJadwalPageState extends State<TambahJadwalPage> {
   @override
   void initState() {
     super.initState();
+    // Mengatur tanggal awal saat initState
     tanggalController.text =
         "${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year}";
   }
@@ -149,7 +150,50 @@ class _TambahJadwalPageState extends State<TambahJadwalPage> {
             controller: controller,
             cursorColor: Colors.black,
             style: const TextStyle(fontSize: 13),
-            readOnly: false, // tetap bisa manual
+            readOnly: label == 'Tanggal', // Hanya tanggal yang readOnly
+            onTap: label == 'Tanggal'
+                ? () async {
+                    // Hanya tampilkan date picker jika labelnya 'Tanggal'
+                    DateTime? pickedDate = await showDatePicker(
+                      context: context,
+                      initialDate: DateTime.now(),
+                      firstDate: DateTime(2000),
+                      lastDate: DateTime(2100),
+                      builder: (context, child) {
+                        return Theme(
+                          data: Theme.of(context).copyWith(
+                            colorScheme: const ColorScheme.light(
+                              primary: Color(0xFF4B2E2B), // Warna utama picker
+                              onPrimary:
+                                  Colors.white, // Warna teks pada warna utama
+                              onSurface:
+                                  Colors.black, // Warna teks pada permukaan
+                            ),
+                            textButtonTheme: TextButtonThemeData(
+                              style: TextButton.styleFrom(
+                                foregroundColor: const Color(
+                                  0xFF4B2E2B,
+                                ), // Warna teks tombol
+                              ),
+                            ),
+                          ),
+                          child: child!,
+                        );
+                      },
+                    );
+
+                    // --- SOLUSI UNTUK ERROR NULLABILITY ---
+                    if (pickedDate != null) {
+                      // Periksa jika pickedDate tidak null
+                      String formattedDate =
+                          "${pickedDate.day}/${pickedDate.month}/${pickedDate.year}";
+                      setState(() {
+                        controller.text = formattedDate;
+                      });
+                    }
+                    // --- AKHIR SOLUSI ---
+                  }
+                : null, // Jika bukan 'Tanggal', onTap adalah null
             decoration: InputDecoration(
               filled: true,
               fillColor: const Color(0xFF4B2E2B).withOpacity(0.2),
@@ -162,28 +206,10 @@ class _TambahJadwalPageState extends State<TambahJadwalPage> {
                 borderSide: BorderSide.none,
               ),
               suffixIcon: label == 'Tanggal'
-                  ? IconButton(
-                      icon: const Icon(
-                        Icons.calendar_today,
-                        size: 16,
-                        color: Colors.black,
-                      ),
-                      onPressed: () async {
-                        DateTime? pickedDate = await showDatePicker(
-                          context: context,
-                          initialDate: DateTime.now(),
-                          firstDate: DateTime(2000),
-                          lastDate: DateTime(2100),
-                        );
-                        if (pickedDate != null) {
-                          String formattedDate =
-                              "${pickedDate.day}/${pickedDate.month}/${pickedDate.year}";
-
-                          setState(() {
-                            controller.text = formattedDate;
-                          });
-                        }
-                      },
+                  ? const Icon(
+                      Icons.calendar_today,
+                      size: 16,
+                      color: Colors.black,
                     )
                   : null,
             ),
