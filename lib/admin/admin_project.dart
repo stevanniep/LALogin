@@ -1,7 +1,50 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:intl/intl.dart'; // Import for date formatting
 
-class AdminProjectPage extends StatelessWidget {
+class AdminProjectPage extends StatefulWidget {
   const AdminProjectPage({super.key});
+
+  @override
+  State<AdminProjectPage> createState() => _AdminProjectPageState();
+}
+
+class _AdminProjectPageState extends State<AdminProjectPage> {
+  late Future<List<Map<String, dynamic>>> _projectsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _projectsFuture = _fetchProjects();
+  }
+
+  Future<List<Map<String, dynamic>>> _fetchProjects() async {
+    try {
+      final response = await Supabase.instance.client
+          .from('projects')
+          .select(
+            'id, title, project_stages(stage_name, is_completed, completed_at)',
+          )
+          .order(
+            'created_at',
+            ascending: false,
+          ); // Order by creation date, newest first
+
+      if (response == null) {
+        return [];
+      }
+
+      // Supabase returns nested data as a List of Maps.
+      // Ensure the response is correctly cast.
+      return List<Map<String, dynamic>>.from(response);
+    } on PostgrestException catch (e) {
+      print('Supabase error fetching projects: ${e.message}');
+      return []; // Return empty list on error
+    } catch (e) {
+      print('Error fetching projects: $e');
+      return []; // Return empty list on error
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,29 +77,41 @@ class AdminProjectPage extends StatelessWidget {
           ),
         ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: const [
-          CustomProjectTile(title: 'Proyek Lab 1', hasDetail: true),
-          SizedBox(height: 16),
-          CustomProjectTile(title: 'Proyek Lab 2'),
-          SizedBox(height: 16),
-          CustomProjectTile(title: 'Proyek Lab 3'),
-        ],
+      body: FutureBuilder<List<Map<String, dynamic>>>(
+        future: _projectsFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(
+              child: CircularProgressIndicator(color: Color(0xFF4B2E2B)),
+            );
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(child: Text('Tidak ada proyek ditemukan.'));
+          } else {
+            final projects = snapshot.data!;
+            return ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: projects.length,
+              itemBuilder: (context, index) {
+                final project = projects[index];
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 16.0),
+                  child: CustomProjectTile(projectData: project),
+                );
+              },
+            );
+          }
+        },
       ),
     );
   }
 }
 
 class CustomProjectTile extends StatefulWidget {
-  final String title;
-  final bool hasDetail;
+  final Map<String, dynamic> projectData;
 
-  const CustomProjectTile({
-    super.key,
-    required this.title,
-    this.hasDetail = false,
-  });
+  const CustomProjectTile({super.key, required this.projectData});
 
   @override
   State<CustomProjectTile> createState() => _CustomProjectTileState();
@@ -65,8 +120,43 @@ class CustomProjectTile extends StatefulWidget {
 class _CustomProjectTileState extends State<CustomProjectTile> {
   bool _isExpanded = false;
 
+  // Helper function to format date
+  String _formatDate(String? dateString) {
+    if (dateString == null || dateString.isEmpty) {
+      return '-';
+    }
+    try {
+      // Assuming dateString is in ISO 8601 format (YYYY-MM-DDTHH:MM:SS.SSSZ or YYYY-MM-DD)
+      final DateTime dateTime = DateTime.parse(dateString);
+      // Format to DD/MM/YY
+      return DateFormat('dd/MM/yy').format(dateTime);
+    } catch (e) {
+      print('Error formatting date "$dateString": $e');
+      return '-';
+    }
+  }
+
+  // Function to calculate project progress
+  double _calculateProgress(List<dynamic>? stages) {
+    if (stages == null || stages.isEmpty) {
+      return 0.0;
+    }
+    int completedStages = 0;
+    for (var stage in stages) {
+      if (stage['is_completed'] == true) {
+        completedStages++;
+      }
+    }
+    return (completedStages / stages.length) * 100;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final String title =
+        widget.projectData['title'] ?? 'Judul Proyek Tidak Ada';
+    final List<dynamic>? stages = widget.projectData['project_stages'];
+    final double progress = _calculateProgress(stages);
+
     return Center(
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
@@ -86,27 +176,25 @@ class _CustomProjectTileState extends State<CustomProjectTile> {
           children: [
             ListTile(
               title: Text(
-                widget.title,
+                title,
                 style: const TextStyle(
                   fontFamily: 'Poppins',
-                  fontWeight: FontWeight.w500,
-                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
                   color: Color(0xFF4B2E2B),
                 ),
               ),
               trailing: GestureDetector(
                 onTap: () {
-                  if (widget.hasDetail) {
-                    setState(() {
-                      _isExpanded = !_isExpanded;
-                    });
-                  }
+                  setState(() {
+                    _isExpanded = !_isExpanded;
+                  });
                 },
                 child: AnimatedRotation(
                   turns: _isExpanded ? 0.25 : 0.0,
                   duration: const Duration(milliseconds: 200),
                   child: Image.asset(
-                    'assets/adm/panah.png',
+                    'assets/adm/panah.png', // Pastikan path benar
                     width: 20,
                     height: 20,
                     color: const Color(0xFF4B2E2B),
@@ -114,7 +202,7 @@ class _CustomProjectTileState extends State<CustomProjectTile> {
                 ),
               ),
             ),
-            if (_isExpanded && widget.hasDetail)
+            if (_isExpanded && stages != null && stages.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16.0,
@@ -122,53 +210,98 @@ class _CustomProjectTileState extends State<CustomProjectTile> {
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          "Tahap 1",
-                          style: TextStyle(fontFamily: 'Poppins'),
+                  children: [
+                    // Display each stage
+                    for (
+                      int i = 0;
+                      i < stages.length;
+                      i++
+                    ) // Use index for "Tahap X"
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 6.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment
+                              .start, // Align top for multiline text
+                          children: [
+                            Expanded(
+                              flex: 3, // Tetap 3 untuk nama tahap
+                              child: Column(
+                                // Use Column to stack "Tahap X" and stage_name
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Tahap ${i + 1}", // Display "Tahap X"
+                                    style: const TextStyle(
+                                      fontFamily: 'Poppins',
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 12,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                  Text(
+                                    stages[i]['stage_name'] ?? 'Nama Tahap',
+                                    style: const TextStyle(
+                                      fontFamily: 'Poppins',
+                                      fontWeight: FontWeight.w400,
+                                      fontSize: 11,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            // Kolom status
+                            SizedBox(
+                              // Menggunakan SizedBox dengan lebar tetap untuk status
+                              width:
+                                  90, // Sesuaikan lebar ini sesuai kebutuhan Anda
+                              child: Center(
+                                child: Text(
+                                  stages[i]['is_completed'] == true
+                                      ? "Selesai"
+                                      : "Belum Selesai",
+                                  style: const TextStyle(
+                                    fontFamily: 'Poppins',
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 12,
+                                    color: Colors.black,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ),
+                            // Kolom tanggal
+                            SizedBox(
+                              // Menggunakan SizedBox dengan lebar tetap untuk tanggal
+                              width:
+                                  97, // Sesuaikan lebar ini sesuai kebutuhan Anda (lebar 'xx/xx/xx')
+                              child: Text(
+                                // Jika belum selesai, tampilkan 'xx/xx/xx' sebagai placeholder tanggal
+                                stages[i]['is_completed'] == true
+                                    ? _formatDate(stages[i]['completed_at'])
+                                    : '-',
+                                style: const TextStyle(
+                                  fontFamily: 'Poppins',
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 12,
+                                  color: Colors.black,
+                                ),
+                                textAlign: TextAlign.right,
+                              ),
+                            ),
+                          ],
                         ),
-                        Text(
-                          "Selesai",
-                          style: TextStyle(fontFamily: 'Poppins'),
-                        ),
-                        Text(
-                          "22/07/25",
-                          style: TextStyle(fontFamily: 'Poppins'),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 6),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          "Tahap 2",
-                          style: TextStyle(fontFamily: 'Poppins'),
-                        ),
-                        Padding(
-                          padding: EdgeInsets.only(
-                            right: 65,
-                          ), // Coba geser ke kanan sekitar 32 pixel
-                          child: Text(
-                            "Belum Selesai",
-                            style: TextStyle(fontFamily: 'Poppins'),
-                          ),
-                        ),
-
-                        Text("", style: TextStyle(fontFamily: 'Poppins')),
-                      ],
-                    ),
-
-                    SizedBox(height: 12),
+                      ),
+                    const SizedBox(height: 12),
                     Center(
                       child: Text(
-                        "Progres: 50%",
-                        style: TextStyle(
+                        "Progres: ${progress.toStringAsFixed(0)}%", // Tampilkan progres dengan 0 desimal
+                        style: const TextStyle(
                           fontFamily: 'Poppins',
                           fontWeight: FontWeight.w500,
+                          fontSize: 13,
+                          color: Colors.black,
                         ),
                       ),
                     ),
