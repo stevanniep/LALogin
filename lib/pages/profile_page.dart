@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'edit_profile_page.dart';
 import 'faceid_page.dart';
@@ -12,24 +13,60 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
+  final supabase = Supabase.instance.client;
   bool isBiometricEnabled = false;
+  Map<String, dynamic>? profileData;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchProfile();
+  }
+
+  Future<void> fetchProfile() async {
+    final user = supabase.auth.currentUser;
+    if (user == null) return;
+
+    final response = await supabase
+        .from('profiles')
+        .select('full_name, nim, role, email, username, created_at')
+        .eq('user_id', user.id)
+        .single();
+
+    setState(() {
+      profileData = Map<String, dynamic>.from(response);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    final user = Supabase.instance.client.auth.currentUser;
-    final email = user?.email ?? '-';
-    final displayNameRaw = user?.userMetadata?['display_name'] ?? (email.contains('@') ? email.split('@')[0] : 'Pengguna');
-    final displayName = displayNameRaw;
-    final phone = user?.userMetadata?['phone'] ?? '-';
+    if (profileData == null) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    final fullName = profileData!['full_name'];
+    final nim = profileData!['nim'] ?? '-';
+    final roleRaw = profileData!['role'];
+    final role = (roleRaw == 'Pengguna') ? 'Asisten' : 'Admin';
+    final email = profileData!['email'];
+    final usernameRaw = profileData!['username'];
+    final username = (usernameRaw == null || usernameRaw.isEmpty)
+        ? email.split('@')[0]
+        : usernameRaw;
+
+    final createdAt = profileData!['created_at'];
+    final createdText =
+        "Dibuat pada ${DateFormat('dd-MM-yyyy HH:mm').format(DateTime.parse(createdAt))}";
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFAF9F9),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.only(bottom: 24),
           child: Column(
             children: [
-              // profile card
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
@@ -50,7 +87,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            displayName,
+                            username,
                             style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
@@ -58,22 +95,15 @@ class _ProfilePageState extends State<ProfilePage> {
                             overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(height: 4),
-                          const Text(
-                            'Asisten',
-                            style: TextStyle(color: Colors.white70),
-                          ),
+                          Text(role, style: const TextStyle(color: Colors.white70)),
                           const SizedBox(height: 4),
-                          Text(
-                            email,
-                            style: const TextStyle(color: Colors.white70),
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                          Text(email,
+                              style: const TextStyle(color: Colors.white70),
+                              overflow: TextOverflow.ellipsis),
                           const SizedBox(height: 4),
-                          Text(
-                            phone,
-                            style: const TextStyle(color: Colors.white70),
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                          Text(nim,
+                              style: const TextStyle(color: Colors.white70),
+                              overflow: TextOverflow.ellipsis),
                         ],
                       ),
                     ),
@@ -81,7 +111,6 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
               ),
 
-              // biometric
               _buildCard(
                 icon: 'biometrik.png',
                 label: 'Login Biometrik',
@@ -127,7 +156,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 icon: 'logout.png',
                 label: 'Logout',
                 onTap: () {
-                  Supabase.instance.client.auth.signOut();
+                  supabase.auth.signOut();
                   Navigator.pushAndRemoveUntil(
                     context,
                     MaterialPageRoute(builder: (_) => const LoginRegistPage()),
@@ -137,9 +166,9 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
 
               const SizedBox(height: 16),
-              const Text(
-                "Terakhir diakses pada 29 Februari 2025",
-                style: TextStyle(fontSize: 12, color: Colors.black),
+              Text(
+                createdText,
+                style: const TextStyle(fontSize: 12, color: Colors.black),
               ),
             ],
           ),
@@ -158,7 +187,7 @@ class _ProfilePageState extends State<ProfilePage> {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFFFAF9F9),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: const [
           BoxShadow(
@@ -206,12 +235,12 @@ class _ProfilePageState extends State<ProfilePage> {
     final days = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
     final values = [5, 9, 13, 17, 20, 24];
     final colors = [
-      Color(0xFFCEB9AF),
-      Color(0xFFC4A793),
-      Color(0xFFB8937D),
-      Color(0xFFA87664),
-      Color(0xFF8F5744),
-      Color(0xFF5E4036),
+      const Color(0xFFCEB9AF),
+      const Color(0xFFC4A793),
+      const Color(0xFFB8937D),
+      const Color(0xFFA87664),
+      const Color(0xFF8F5744),
+      const Color(0xFF5E4036),
     ];
 
     return Row(

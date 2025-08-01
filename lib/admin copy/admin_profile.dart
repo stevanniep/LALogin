@@ -5,14 +5,14 @@ import 'edit_profile_page.dart';
 import 'faceid_page.dart';
 import '../screens/login_regist.dart';
 
-class AdminProfilePage extends StatefulWidget {
-  const AdminProfilePage({super.key});
+class ProfilePage extends StatefulWidget {
+  const ProfilePage({super.key});
 
   @override
-  State<AdminProfilePage> createState() => _AdminProfilePageState();
+  State<ProfilePage> createState() => _ProfilePageState();
 }
 
-class _AdminProfilePageState extends State<AdminProfilePage> {
+class _ProfilePageState extends State<ProfilePage> {
   final supabase = Supabase.instance.client;
   bool isBiometricEnabled = false;
   Map<String, dynamic>? profileData;

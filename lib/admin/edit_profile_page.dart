@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'home_page.dart';
+import '../admin/admin_navbar.dart';
 
 class EditProfilePage extends StatefulWidget {
   const EditProfilePage({super.key});
@@ -171,9 +171,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
       );
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (_) => const HomePage(initialIndex: 4)),
+        MaterialPageRoute(builder: (_) => const AdminHomePage(initialIndex: 4)),
         (route) => false,
       );
+
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Gagal menyimpan profil: $e')),
