@@ -1,8 +1,6 @@
-// admin_tambah_proyek.dart
-
 import 'package:flutter/material.dart';
-import 'admin_navbar.dart';
-import 'admin_tambah_proyek_kontributor.dart';
+import 'admin_navbar.dart'; // Pastikan path ini benar
+import 'admin_tambah_proyek_kontributor.dart'; // Pastikan path ini benar
 
 class TambahProyekPage extends StatefulWidget {
   const TambahProyekPage({super.key});
@@ -20,12 +18,16 @@ class _TambahProyekPageState extends State<TambahProyekPage> {
       TextEditingController();
   final TextEditingController tahapanController = TextEditingController();
 
-  List<String> _daftarKontributor = []; // Untuk menyimpan daftar kontributor
-  List<String> _daftarTahapan = []; // Untuk menyimpan daftar tahapan
+  // Daftar ini tidak lagi digunakan untuk penyimpanan langsung di sini,
+  // tetapi bisa digunakan jika Anda ingin menampilkan data yang dikumpulkan
+  // setelah proses penyimpanan selesai di halaman lain.
+  List<String> _daftarKontributor = [];
+  List<String> _daftarTahapan = [];
 
   @override
   void initState() {
     super.initState();
+    // Mengatur tanggal mulai default ke tanggal hari ini
     tanggalMulaiController.text =
         "${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year}";
   }
@@ -38,6 +40,20 @@ class _TambahProyekPageState extends State<TambahProyekPage> {
     jumlahKontributorController.dispose();
     tahapanController.dispose();
     super.dispose();
+  }
+
+  // Fungsi pembantu untuk mengurai string tanggal "DD/MM/YYYY" menjadi objek DateTime
+  DateTime _parseDate(String input) {
+    try {
+      final parts = input.split('/');
+      final day = int.parse(parts[0]);
+      final month = int.parse(parts[1]);
+      final year = int.parse(parts[2]);
+      return DateTime(year, month, day);
+    } catch (e) {
+      // Jika parsing gagal (misalnya string kosong atau format salah), kembalikan tanggal hari ini
+      return DateTime.now();
+    }
   }
 
   @override
@@ -64,6 +80,7 @@ class _TambahProyekPageState extends State<TambahProyekPage> {
                 children: [
                   GestureDetector(
                     onTap: () {
+                      // Kembali ke AdminHomePage
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
@@ -73,7 +90,7 @@ class _TambahProyekPageState extends State<TambahProyekPage> {
                       );
                     },
                     child: Image.asset(
-                      'assets/icons/kembali.png',
+                      'assets/icons/kembali.png', // Pastikan path benar
                       width: 24,
                       height: 24,
                     ),
@@ -99,28 +116,34 @@ class _TambahProyekPageState extends State<TambahProyekPage> {
                 child: Column(
                   children: [
                     const SizedBox(height: 70),
+                    // Input Judul Proyek
                     _inputField('Judul Proyek', judulController),
+                    // Input Tanggal Mulai (dengan date picker)
                     _inputField(
                       'Tanggal mulai',
                       tanggalMulaiController,
                       isTanggal: true,
                     ),
+                    // Input Tanggal Berakhir (dengan date picker)
                     _inputField(
                       'Tanggal berakhir',
                       tanggalBerakhirController,
                       isTanggal: true,
                     ),
+                    // Input Jumlah Kontributor (hanya angka)
                     _inputField(
                       'Jumlah kontributor',
                       jumlahKontributorController,
                       keyboardType: TextInputType.number,
                     ),
+                    // Input Jumlah Tahapan (hanya angka)
                     _inputField(
                       'Jumlah Tahapan',
                       tahapanController,
                       keyboardType: TextInputType.number,
                     ),
                     const SizedBox(height: 30),
+                    // Tombol Lanjut
                     SizedBox(
                       width: 248,
                       height: 38,
@@ -132,13 +155,14 @@ class _TambahProyekPageState extends State<TambahProyekPage> {
                           ),
                         ),
                         onPressed: () async {
+                          // Mengambil nilai jumlah kontributor dan tahapan
                           final jumlahKontributor =
                               int.tryParse(jumlahKontributorController.text) ??
                               0;
                           final jumlahTahapan =
                               int.tryParse(tahapanController.text) ?? 0;
 
-                          // Siapkan data proyek awal untuk diteruskan
+                          // Siapkan data proyek awal untuk diteruskan ke halaman kontributor
                           final initialProyekData = {
                             'judul': judulController.text,
                             'mulai': tanggalMulaiController.text,
@@ -147,9 +171,8 @@ class _TambahProyekPageState extends State<TambahProyekPage> {
                             'jumlahTahapan': jumlahTahapan,
                           };
 
-                          // Hanya push ke halaman kontributor.
-                          // Halaman kontributor yang akan melanjutkan ke halaman tahapan
-                          // dan mengembalikan semua data.
+                          // Navigasi ke halaman TambahProyekKontributorPage
+                          // dan tunggu hasil pengumpulan data dari halaman tahapan
                           final resultCompleteData = await Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -161,6 +184,7 @@ class _TambahProyekPageState extends State<TambahProyekPage> {
                             ),
                           );
 
+                          // Jika ada data lengkap yang dikembalikan dari halaman tahapan (setelah penyimpanan)
                           if (resultCompleteData != null &&
                               resultCompleteData is Map<String, dynamic>) {
                             setState(() {
@@ -173,7 +197,8 @@ class _TambahProyekPageState extends State<TambahProyekPage> {
                             print(
                               "Data proyek lengkap diterima di TambahProyekPage: $resultCompleteData",
                             );
-                            // Lakukan proses penyimpanan di sini
+                            // Pada titik ini, data proyek seharusnya sudah disimpan di Supabase oleh TambahProyekTahapanPage.
+                            // Anda bisa menambahkan logika lain di sini jika diperlukan setelah penyimpanan.
                           }
                         },
                         child: const Text(
@@ -197,6 +222,7 @@ class _TambahProyekPageState extends State<TambahProyekPage> {
     );
   }
 
+  // Widget pembantu untuk membuat TextField
   Widget _inputField(
     String label,
     TextEditingController controller, {
@@ -222,8 +248,29 @@ class _TambahProyekPageState extends State<TambahProyekPage> {
             controller: controller,
             cursorColor: Colors.black,
             style: const TextStyle(fontSize: 13),
-            readOnly: false, // Kembalikan ke isTanggal untuk readOnly tanggal
+            // Mengatur readOnly berdasarkan isTanggal
+            readOnly: isTanggal,
             keyboardType: keyboardType,
+            // Menambahkan onTap agar date picker muncul saat di-tap jika ini adalah field tanggal
+            onTap: isTanggal
+                ? () async {
+                    DateTime? pickedDate = await showDatePicker(
+                      context: context,
+                      // Menggunakan _parseDate untuk mengatur initialDate dari nilai controller saat ini
+                      initialDate: _parseDate(controller.text),
+                      firstDate: DateTime(2000),
+                      lastDate: DateTime(2100),
+                    );
+                    if (pickedDate != null) {
+                      // Format tanggal yang dipilih ke DD/MM/YYYY
+                      String formattedDate =
+                          "${pickedDate.day}/${pickedDate.month}/${pickedDate.year}";
+                      setState(() {
+                        controller.text = formattedDate;
+                      });
+                    }
+                  }
+                : null,
             decoration: InputDecoration(
               filled: true,
               fillColor: const Color(0xFF4B2E2B).withOpacity(0.2),
@@ -235,28 +282,12 @@ class _TambahProyekPageState extends State<TambahProyekPage> {
                 borderRadius: BorderRadius.circular(8),
                 borderSide: BorderSide.none,
               ),
+              // Menambahkan ikon kalender jika isTanggal true
               suffixIcon: isTanggal
-                  ? IconButton(
-                      icon: const Icon(
-                        Icons.calendar_today,
-                        size: 16,
-                        color: Colors.black,
-                      ),
-                      onPressed: () async {
-                        DateTime? pickedDate = await showDatePicker(
-                          context: context,
-                          initialDate: DateTime.now(),
-                          firstDate: DateTime(2000),
-                          lastDate: DateTime(2100),
-                        );
-                        if (pickedDate != null) {
-                          String formattedDate =
-                              "${pickedDate.day}/${pickedDate.month}/${pickedDate.year}";
-                          setState(() {
-                            controller.text = formattedDate;
-                          });
-                        }
-                      },
+                  ? const Icon(
+                      Icons.calendar_today,
+                      size: 16,
+                      color: Colors.black,
                     )
                   : null,
             ),

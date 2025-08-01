@@ -1,11 +1,10 @@
-// admin_tambah_proyek_kontributor.dart
-
 import 'package:flutter/material.dart';
-import 'admin_tambah_proyek_tahap.dart'; // Import halaman tahapan
+import 'admin_tambah_proyek_tahap.dart'; // Pastikan path ini benar dan mengarah ke file tahapan
 
 class TambahProyekKontributorPage extends StatefulWidget {
   final int jumlahKontributor;
-  final Map<String, dynamic> initialProyekData; // Tambahkan ini
+  final Map<String, dynamic>
+  initialProyekData; // Data proyek dari halaman sebelumnya
 
   const TambahProyekKontributorPage({
     super.key,
@@ -20,12 +19,14 @@ class TambahProyekKontributorPage extends StatefulWidget {
 
 class _TambahProyekKontributorPageState
     extends State<TambahProyekKontributorPage> {
-  late List<TextEditingController> _controllers;
+  late List<TextEditingController>
+  _kontributorControllers; // Mengganti _controllers menjadi _kontributorControllers untuk kejelasan
 
   @override
   void initState() {
     super.initState();
-    _controllers = List.generate(
+    _kontributorControllers = List.generate(
+      // Menggunakan _kontributorControllers
       widget.jumlahKontributor,
       (index) => TextEditingController(),
     );
@@ -33,7 +34,8 @@ class _TambahProyekKontributorPageState
 
   @override
   void dispose() {
-    for (var controller in _controllers) {
+    for (var controller in _kontributorControllers) {
+      // Menggunakan _kontributorControllers
       controller.dispose();
     }
     super.dispose();
@@ -65,14 +67,14 @@ class _TambahProyekKontributorPageState
                     onTap: () =>
                         Navigator.pop(context), // Kembali ke TambahProyekPage
                     child: Image.asset(
-                      'assets/icons/kembali.png',
+                      'assets/icons/kembali.png', // Pastikan path aset ini benar
                       width: 24,
                       height: 24,
                     ),
                   ),
                   const SizedBox(width: 12),
                   const Text(
-                    'Tambah Proyek 2', // Ubah judul jika perlu
+                    'Tambah Proyek', // Judul halaman
                     style: TextStyle(
                       fontFamily: 'Poppins',
                       fontWeight: FontWeight.w700,
@@ -84,17 +86,18 @@ class _TambahProyekKontributorPageState
               ),
             ),
 
-            // Form Input
+            // Form Input Kontributor
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
                     const SizedBox(height: 50),
+                    // Loop untuk membuat TextField sesuai jumlah kontributor
                     for (int i = 0; i < widget.jumlahKontributor; i++)
                       _inputField(
                         'Username Kontributor ${i + 1}',
-                        _controllers[i],
+                        _kontributorControllers[i], // Menggunakan _kontributorControllers
                       ),
                     const SizedBox(height: 30),
                     SizedBox(
@@ -108,40 +111,44 @@ class _TambahProyekKontributorPageState
                           ),
                         ),
                         onPressed: () async {
-                          final usernames = _controllers
-                              .map((controller) => controller.text)
-                              .toList();
+                          // Mengumpulkan username kontributor dari semua TextEditingController
+                          final List<String> daftarKontributor =
+                              _kontributorControllers
+                                  .map(
+                                    (c) => c.text.trim(),
+                                  ) // Ambil teks dan hapus spasi di awal/akhir
+                                  .where(
+                                    (text) => text.isNotEmpty,
+                                  ) // Hanya ambil yang tidak kosong
+                                  .toList();
 
                           // Siapkan data yang akan diteruskan ke halaman tahapan
                           // Gabungkan data proyek awal + data kontributor
                           Map<String, dynamic> dataUntukTahapan = Map.from(
                             widget.initialProyekData,
                           );
-                          dataUntukTahapan['daftarKontributor'] = usernames;
+                          dataUntukTahapan['daftarKontributor'] =
+                              daftarKontributor;
 
-                          // Push ke halaman tahapan
+                          // Navigasi ke halaman TambahProyekTahapanPage
+                          // dan tunggu hasil (yang mungkin berisi sinyal bahwa penyimpanan sudah selesai)
                           final resultTahapan = await Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (context) => TambahProyekTahapanPage(
-                                jumlahTahapan: widget
-                                    .initialProyekData['jumlahTahapan'], // Ambil dari data awal
-                                dataProyekDanKontributor:
-                                    dataUntukTahapan, // Teruskan data gabungan
+                                // Ambil jumlah tahapan dari initialProyekData
+                                jumlahTahapan:
+                                    widget.initialProyekData['jumlahTahapan'],
+                                // Teruskan data gabungan (proyek awal + kontributor)
+                                initialProyekData: dataUntukTahapan,
                               ),
                             ),
                           );
 
                           // Setelah kembali dari halaman tahapan,
-                          // kembalikan semua data ke TambahProyekPage
-                          if (resultTahapan != null &&
-                              resultTahapan is List<String>) {
-                            // Gabungkan semua data untuk dikembalikan ke TambahProyekPage
-                            Map<String, dynamic> completeProyekData = Map.from(
-                              dataUntukTahapan,
-                            );
-                            completeProyekData['daftarTahapan'] = resultTahapan;
-                            Navigator.pop(context, completeProyekData);
+                          // kembalikan hasil (jika ada) ke TambahProyekPage
+                          if (resultTahapan != null) {
+                            Navigator.pop(context, resultTahapan);
                           }
                         },
                         child: const Text(
@@ -165,6 +172,7 @@ class _TambahProyekKontributorPageState
     );
   }
 
+  // Widget pembantu untuk membuat field input teks
   Widget _inputField(String label, TextEditingController controller) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
