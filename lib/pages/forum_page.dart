@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:timeago/timeago.dart' as timeago;
+import 'forum_card.dart';
 import 'new_post_page.dart';
 import 'comment_page.dart';
-import 'forum_card.dart';
 
 class ForumPage extends StatefulWidget {
   const ForumPage({super.key});
@@ -11,26 +13,30 @@ class ForumPage extends StatefulWidget {
 }
 
 class _ForumPageState extends State<ForumPage> {
-  final List<Map<String, String>> posts = [
-    {
-      'author': 'Saya',
-      'time': '2 menit yang lalu',
-      'content': 'Lorem ipsum dolor sit amet...',
-    },
-    {
-      'author': 'Member No. 1',
-      'time': '5 menit yang lalu',
-      'content': 'Ada yang tahu cara rakit PC?',
-    },
-  ];
+  final supabase = Supabase.instance.client;
+  List<Map<String, dynamic>> posts = [];
 
-  void addNewPost(String content) {
+  @override
+  void initState() {
+    super.initState();
+    timeago.setLocaleMessages('id', timeago.IdMessages());
+    fetchPosts();
+  }
+
+  Future<void> fetchPosts() async {
+    final response = await supabase
+        .from('posts')
+        .select('id, content, created_at, profiles(username)')
+        .order('created_at', ascending: false);
+
     setState(() {
-      posts.insert(0, {
-        'author': 'Saya',
-        'time': 'Baru saja',
-        'content': content,
-      });
+      posts = List<Map<String, dynamic>>.from(response);
+    });
+  }
+
+  void addNewPost(Map<String, dynamic> newPost) {
+    setState(() {
+      posts.insert(0, newPost);
     });
   }
 
@@ -43,54 +49,52 @@ class _ForumPageState extends State<ForumPage> {
         elevation: 0,
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
+        automaticallyImplyLeading: false,
       ),
-      body: Stack(
-        children: [
-          ListView.builder(
-            itemCount: posts.length,
-            itemBuilder: (context, index) {
-              final post = posts[index];
-              return ForumCard(
-                author: post['author']!,
-                time: post['time']!,
-                content: post['content']!,
-                onCommentTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => CommentPage(
-                        author: post['author']!,
-                        time: post['time']!,
-                        content: post['content']!,
+      body: posts.isEmpty
+          ? const Center(child: CircularProgressIndicator())
+          : ListView.builder(
+              itemCount: posts.length,
+              itemBuilder: (context, index) {
+                final post = posts[index];
+                final author = post['profiles']['username'] ?? '???';
+                final content = post['content'] ?? '';
+                final createdAt = DateTime.parse(post['created_at']);
+                final time = timeago.format(createdAt, locale: 'id');
+
+                return ForumCard(
+                  author: author,
+                  content: content,
+                  time: time,
+                  onCommentTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => CommentPage(postId: post['id']),
                       ),
-                    ),
-                  );
-                },
-              );
-            },
-          ),
-          // add post
-          Positioned(
-            bottom: 24,
-            right: 24,
-            child: GestureDetector(
-              onTap: () async {
-                final result = await Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const NewPostPage()),
+                    );
+                  },
                 );
-                if (result != null && result is String && result.isNotEmpty) {
-                  addNewPost(result);
-                }
               },
-              child: Image.asset(
-                'assets/icons/add_post.png',
-                width: 48,
-                height: 48,
-              ),
             ),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 16.0, right: 16.0),
+        child: GestureDetector(
+          onTap: () async {
+            final result = await Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const NewPostPage()),
+            );
+            if (result != null) {
+              fetchPosts(); // refresh post dari server
+            }
+          },
+          child: Image.asset(
+            'assets/icons/add_post.png',
+            width: 56, // atau 48 sesuai ukuran asli PNG kamu
+            height: 56,
           ),
-        ],
+        ),
       ),
     );
   }
