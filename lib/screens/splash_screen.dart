@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
 import 'dart:async';
+import 'package:flutter/material.dart';
 import 'login_regist.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -16,7 +16,7 @@ class _SplashScreenState extends State<SplashScreen> {
     Timer(const Duration(seconds: 3), () {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const LoginRegist()),
+        MaterialPageRoute(builder: (context) => const LoginRegistPage()),
       );
     });
   }
@@ -24,12 +24,18 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFFFDE7),
+      backgroundColor: const Color(
+        0xFFFFFDE7,
+      ), // Warna latar belakang sesuai keinginan
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset('assets/logo.png', width: 130, height: 130),
+            Image.asset(
+              'assets/logo.png',
+              width: 130,
+              height: 130,
+            ), // Gambar logo
             const SizedBox(height: 10),
             const Text(
               'My IMV',

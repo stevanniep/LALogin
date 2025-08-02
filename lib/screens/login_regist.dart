@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'register.dart';
+import 'login.dart';
 
-class LoginRegist extends StatelessWidget {
-  const LoginRegist({super.key});
+class LoginRegistPage extends StatelessWidget {
+  const LoginRegistPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -21,38 +22,49 @@ class LoginRegist extends StatelessWidget {
             ),
             const SizedBox(height: 50),
 
-            // Baris tombol Masuk dan fingerprint
+            // Baris tombol Masuk + fingerprint
             SizedBox(
               width: 248,
               height: 38,
               child: Stack(
-                clipBehavior: Clip.none, // biarkan isi boleh keluar
+                clipBehavior: Clip.none,
                 children: [
-                  // Tombol Masuk penuh
-                  Container(
-                    width: 248,
-                    height: 38,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF4B2E2B),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    alignment: Alignment.center,
-                    child: const Text(
-                      'Masuk',
-                      style: TextStyle(
-                        fontFamily: 'Poppins',
-                        fontWeight: FontWeight.w600,
-                        fontSize: 15,
-                        color: Colors.white,
+                  // Tombol Masuk
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const LoginPage()),
+                      );
+                    },
+                    child: Container(
+                      width: 248,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF4B2E2B),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      alignment: Alignment.center,
+                      child: const Text(
+                        'Masuk',
+                        style: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontWeight: FontWeight.w600,
+                          fontSize: 15,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ),
 
-                  // Fingerprint digeser keluar ke kanan
+                  // Fingerprint di kanan luar
                   Positioned(
-                    right: -50, // geser keluar dari batas 248 px
+                    right: -50,
                     top: 0,
                     child: GestureDetector(
+                      onTap: () {
+                        // Tambahkan fungsi fingerprint jika tersedia
+                      },
                       child: Container(
                         width: 38,
                         height: 38,
@@ -78,12 +90,12 @@ class LoginRegist extends StatelessWidget {
 
             const SizedBox(height: 16),
 
-            // Tombol Belum punya akun
+            // Tombol Belum punya akun -> ke RegistPage
             GestureDetector(
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const RegisterPage()),
+                  MaterialPageRoute(builder: (_) => const RegistPage()),
                 );
               },
               child: Container(

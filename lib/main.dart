@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'screens/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await initializeDateFormatting('id_ID', null);
 
   await Supabase.initialize(
     url: 'https://kdwnteewgnyocjmdvldv.supabase.co',
@@ -20,16 +23,8 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      title: 'OTP App',
       debugShowCheckedModeBanner: false,
-      title: 'My IMV',
-      theme: ThemeData(
-        fontFamily: 'Poppins',
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFFDB8617),
-          brightness: Brightness.light,
-        ),
-      ),
       home: const SplashScreen(),
     );
   }
