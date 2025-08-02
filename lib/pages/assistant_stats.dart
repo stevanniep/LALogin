@@ -5,11 +5,9 @@ class AssistantStatsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Text(
-        'Halaman',
-        style: TextStyle(fontSize: 18),
-      ),
+    return Scaffold(
+      appBar: AppBar(title: const Text('Kontak Admin')),
+      body: const Center(child: Text('Halaman Kontak Admin')),
     );
   }
 }
