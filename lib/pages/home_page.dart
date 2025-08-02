@@ -23,10 +23,154 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   late int _selectedIndex;
 
+  List<Map<String, dynamic>> _todaySchedules = [];
+  bool _isLoading = true; // Set to true by default
+  late final RealtimeChannel _scheduleChannel;
+  final PageController _pageController = PageController(viewportFraction: 0.85);
+
   @override
   void initState() {
     super.initState();
     _selectedIndex = widget.initialIndex;
+    _fetchTodaySchedules();
+    _initializeSupabaseRealtime();
+  }
+
+  void _showSnackBar(String message, {bool isError = false}) {
+    if (!mounted) return;
+    final Color backgroundColor = isError
+        ? Colors.red
+        : const Color(0xFF4B2E2B);
+    final Color textColor = Colors.white;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, style: TextStyle(color: textColor)),
+        backgroundColor: backgroundColor,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        margin: const EdgeInsets.all(16),
+      ),
+    );
+  }
+
+  Future<void> _fetchTodaySchedules() async {
+    // Pastikan _isLoading diatur ke true sebelum memulai fetching
+    if (mounted) {
+      setState(() {
+        _isLoading = true;
+      });
+    }
+
+    try {
+      final supabase = Supabase.instance.client;
+
+      final DateTime now = DateTime.now();
+      final String todayDate =
+          '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+
+      print('DEBUG: Memulai pengambilan jadwal untuk tanggal: $todayDate');
+
+      final List<Map<String, dynamic>> data = await supabase
+          .from('jadwal_kegiatan')
+          .select('*')
+          .eq('tanggal', todayDate)
+          .order('waktu', ascending: true);
+
+      print('DEBUG: Data yang diterima dari Supabase: $data');
+      print('DEBUG: Jumlah jadwal yang ditemukan: ${data.length}');
+
+      data.sort((a, b) {
+        String timeA = (a['waktu'] as String? ?? '00.00')
+            .replaceAll(' WIB', '')
+            .replaceAll('.', ':');
+        String timeB = (b['waktu'] as String? ?? '00.00')
+            .replaceAll(' WIB', '')
+            .replaceAll('.', ':');
+        return timeA.compareTo(timeB);
+      });
+
+      if (mounted) {
+        setState(() {
+          _todaySchedules = data;
+        });
+      }
+    } catch (e) {
+      print('DEBUG ERROR: Gagal memuat jadwal hari ini: $e');
+      _showSnackBar('Gagal memuat jadwal hari ini: $e', isError: true);
+    } finally {
+      // Pastikan _isLoading diatur ke false, terlepas dari keberhasilan atau kegagalan
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  void _initializeSupabaseRealtime() {
+    final supabase = Supabase.instance.client;
+    _scheduleChannel = supabase.channel('public:jadwal_kegiatan');
+    _scheduleChannel
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'jadwal_kegiatan',
+          callback: (payload) {
+            print('Realtime event received: ${payload.eventType}');
+            _fetchTodaySchedules();
+          },
+        )
+        .subscribe();
+  }
+
+  String _formatDate(String? dateString) {
+    if (dateString == null) return '-';
+    try {
+      final DateTime date = DateTime.parse(dateString);
+      return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year % 100}';
+    } catch (e) {
+      return dateString;
+    }
+  }
+
+  Widget _buildNoScheduleBox() {
+    return Container(
+      width: 305,
+      height: 136,
+      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.symmetric(horizontal: 8.0),
+      decoration: BoxDecoration(
+        color: const Color(0xFF4B2E2B),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 4,
+            offset: const Offset(0, 4),
+            spreadRadius: 4,
+          ),
+        ],
+      ),
+      child: const Center(
+        child: Text(
+          'Tidak ada jadwal hari ini',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontFamily: 'Poppins',
+            fontWeight: FontWeight.w600,
+            fontSize: 15,
+            color: Colors.white,
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _scheduleChannel.unsubscribe();
+    _pageController.dispose();
+    super.dispose();
   }
 
   Future<void> _signOut() async {
@@ -41,8 +185,8 @@ class _HomePageState extends State<HomePage> {
 
   final List<String> _titles = ['Beranda', 'Proyek', 'Scan', 'Forum', 'Profil'];
 
-  late final List<Widget> _pages = [
-    _buildHomeScreen(),
+  List<Widget> get _pages => [
+    _buildHomeScreen(), // Ini akan rebuild sesuai perubahan state
     const ProjectPage(),
     const ScanPage(),
     const ForumPage(),
@@ -68,7 +212,6 @@ class _HomePageState extends State<HomePage> {
         child: Row(
           children: List.generate(5, (index) {
             final isSelected = _selectedIndex == index;
-
             final iconNames = [
               ['home.png', 'home_active.png'],
               ['project.png', 'project_active.png'],
@@ -76,7 +219,6 @@ class _HomePageState extends State<HomePage> {
               ['forum.png', 'forum_active.png'],
               ['profile.png', 'profile_active.png'],
             ];
-
             final labels = ['Beranda', 'Proyek', 'Scan', 'Forum', 'Profil'];
             final iconPath = isSelected
                 ? 'assets/icons/${iconNames[index][1]}'
@@ -124,37 +266,31 @@ class _HomePageState extends State<HomePage> {
     return SingleChildScrollView(
       child: Column(
         children: [
-          // Bagian atas (Study Group card)
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
-            child: Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: const Color(0xFF5E4036),
-                borderRadius: BorderRadius.circular(15),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black,
-                    blurRadius: 10,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
-              ),
-              height: 120,
-              child: Center(
-                child: Text(
-                  'Tidak ada jadwal',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
+            child: SizedBox(
+              height: 136,
+              child: _isLoading
+                  ? const Center(
+                      child: CircularProgressIndicator(color: Colors.brown),
+                    )
+                  : _todaySchedules.isEmpty
+                  ? Center(child: _buildNoScheduleBox())
+                  : PageView.builder(
+                      controller: _pageController,
+                      itemCount: _todaySchedules.length,
+                      itemBuilder: (context, index) {
+                        return _ScheduleCard(
+                          schedule: _todaySchedules[index],
+                          index: index,
+                          pageController: _pageController,
+                          formatDate: _formatDate,
+                        );
+                      },
+                    ),
             ),
           ),
           const SizedBox(height: 30),
-          // Grid icon dan teks
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20.0),
             child: Container(
@@ -178,14 +314,10 @@ class _HomePageState extends State<HomePage> {
                     crossAxisCount: 4,
                     mainAxisSpacing: 20,
                     crossAxisSpacing: 10,
-                    // Tambahkan childAspectRatio di sini
-                    childAspectRatio:
-                        0.8, // Sesuaikan nilai ini sesuai kebutuhan Anda
+                    childAspectRatio: 0.8,
                     children: [
-                      // Using Image.asset for custom icons
                       _buildGridItem(
-                        iconPath:
-                            'assets/icons/contact.png', // Changed to image asset
+                        iconPath: 'assets/icons/contact.png',
                         label: 'Kontak Admin',
                         onTap: () => Navigator.push(
                           context,
@@ -195,8 +327,7 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ),
                       _buildGridItem(
-                        iconPath:
-                            'assets/icons/clock.png', // Changed to image asset
+                        iconPath: 'assets/icons/clock.png',
                         label: 'Riwayat Presensi',
                         onTap: () => Navigator.push(
                           context,
@@ -206,8 +337,7 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ),
                       _buildGridItem(
-                        iconPath:
-                            'assets/icons/bikeman.png', // Changed to image asset
+                        iconPath: 'assets/icons/bikeman.png',
                         label: 'Riwayat Aktivitas',
                         onTap: () => Navigator.push(
                           context,
@@ -217,8 +347,7 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ),
                       _buildGridItem(
-                        iconPath:
-                            'assets/icons/chart.png', // Changed to image asset
+                        iconPath: 'assets/icons/chart.png',
                         label: 'Statistik Asisten',
                         onTap: () => Navigator.push(
                           context,
@@ -238,7 +367,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // Modified _buildGridItem to accept an iconPath instead of IconData
   Widget _buildGridItem({
     required String iconPath,
     required String label,
@@ -255,13 +383,12 @@ class _HomePageState extends State<HomePage> {
               color: Colors.grey[100],
               borderRadius: BorderRadius.circular(10),
             ),
-            // Use Image.asset here
             child: Image.asset(
               iconPath,
               width: 30,
               height: 30,
               color: Colors.grey[700],
-            ), // Apply color filter
+            ),
           ),
           const SizedBox(height: 8),
           Text(
@@ -271,6 +398,150 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _ScheduleCard extends StatefulWidget {
+  final Map<String, dynamic> schedule;
+  final int index;
+  final PageController pageController;
+  final String Function(String?) formatDate;
+
+  const _ScheduleCard({
+    required this.schedule,
+    required this.index,
+    required this.pageController,
+    required this.formatDate,
+  });
+
+  @override
+  State<_ScheduleCard> createState() => _ScheduleCardState();
+}
+
+class _ScheduleCardState extends State<_ScheduleCard>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+
+    return AnimatedBuilder(
+      animation: widget.pageController,
+      builder: (context, child) {
+        double scale = 1.0;
+        double opacity = 1.0;
+        double offset = 0.0;
+
+        if (widget.pageController.hasClients &&
+            widget.pageController.position.haveDimensions &&
+            widget.pageController.page != null) {
+          offset = widget.pageController.page! - widget.index;
+        } else {
+          offset = 0.0 - widget.index;
+        }
+
+        final double normalizedOffset = offset.abs().clamp(0.0, 1.0);
+
+        scale = 1.0 - (normalizedOffset * 0.15);
+        scale = scale.clamp(0.85, 1.0);
+
+        opacity = 1.0 - (normalizedOffset * 0.4);
+        opacity = opacity.clamp(0.6, 1.0);
+
+        double translateX = 0.0;
+        if (offset < 0) {
+          translateX = -30.0 * normalizedOffset;
+        } else if (offset > 0) {
+          translateX = 30.0 * normalizedOffset;
+        }
+
+        return Center(
+          child: Transform.translate(
+            offset: Offset(translateX, 0.0),
+            child: Transform.scale(
+              scale: scale,
+              child: Opacity(
+                opacity: opacity,
+                child: Container(
+                  width: 330,
+                  height: 136,
+                  margin: const EdgeInsets.symmetric(horizontal: 8.0),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF4B2E2B),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 4,
+                        offset: const Offset(0, 4),
+                        spreadRadius: 4,
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            widget.schedule['nama'] ?? 'Nama Kegiatan',
+                            style: const TextStyle(
+                              fontFamily: 'Poppins',
+                              fontWeight: FontWeight.w700,
+                              fontSize: 18,
+                              color: Colors.white,
+                            ),
+                          ),
+                          Text(
+                            widget.formatDate(
+                              widget.schedule['tanggal'] as String?,
+                            ),
+                            style: const TextStyle(
+                              fontFamily: 'Poppins',
+                              fontWeight: FontWeight.w500,
+                              fontSize: 14,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const Spacer(),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            widget.schedule['tempat'] ?? 'Tempat',
+                            style: const TextStyle(
+                              fontFamily: 'Poppins',
+                              fontWeight: FontWeight.w500,
+                              fontSize: 14,
+                              color: Colors.white,
+                            ),
+                          ),
+                          Text(
+                            widget.schedule['waktu'] ?? 'Waktu',
+                            style: const TextStyle(
+                              fontFamily: 'Poppins',
+                              fontWeight: FontWeight.w500,
+                              fontSize: 14,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
