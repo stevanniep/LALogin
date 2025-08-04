@@ -5,10 +5,10 @@ import 'project_page.dart';
 import 'scan_page.dart';
 import 'forum_page.dart';
 import 'profile_page.dart';
+import 'riwayat_presensi_page.dart';
 
 // Import the new pages you want to navigate to
 import 'admin_contact.dart';
-import 'attendance_history.dart';
 import 'activity_history.dart';
 import 'assistant_stats.dart';
 
@@ -332,7 +332,7 @@ class _HomePageState extends State<HomePage> {
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => const AttendanceHistoryPage(),
+                            builder: (_) => const RiwayatPresensiPage(),
                           ),
                         ),
                       ),
