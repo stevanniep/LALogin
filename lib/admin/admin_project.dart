@@ -23,26 +23,36 @@ class _AdminProjectPageState extends State<AdminProjectPage> {
       final response = await Supabase.instance.client
           .from('projects')
           .select(
-            'id, title, project_stages(stage_name, is_completed, completed_at)',
+            'id, title, project_stages(stage_name, is_completed, completed_at, order_index)',
           )
-          .order(
-            'created_at',
-            ascending: false,
-          ); // Order by creation date, newest first
+          .order('created_at', ascending: false);
 
       if (response == null) {
         return [];
       }
 
-      // Supabase returns nested data as a List of Maps.
-      // Ensure the response is correctly cast.
-      return List<Map<String, dynamic>>.from(response);
+      // Mengambil data dan mengurutkan tahap-tahap proyek
+      final List<Map<String, dynamic>> projects =
+          List<Map<String, dynamic>>.from(response);
+
+      for (var project in projects) {
+        if (project['project_stages'] != null) {
+          final List<dynamic> stages = project['project_stages'];
+          // Mengurutkan stages berdasarkan order_index
+          stages.sort(
+            (a, b) =>
+                (a['order_index'] as int).compareTo(b['order_index'] as int),
+          );
+        }
+      }
+
+      return projects;
     } on PostgrestException catch (e) {
       print('Supabase error fetching projects: ${e.message}');
-      return []; // Return empty list on error
+      return [];
     } catch (e) {
       print('Error fetching projects: $e');
-      return []; // Return empty list on error
+      return [];
     }
   }
 

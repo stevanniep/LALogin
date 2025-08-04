@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:local_auth/local_auth.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'edit_profile_page.dart';
-import 'faceid_page.dart';
+// import 'faceid_page.dart'; // Hapus impor ini
 import '../screens/login_regist.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -14,6 +16,8 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   final supabase = Supabase.instance.client;
+  final localAuth = LocalAuthentication();
+  final secureStorage = const FlutterSecureStorage();
   bool isBiometricEnabled = false;
   Map<String, dynamic>? profileData;
 
@@ -21,6 +25,14 @@ class _ProfilePageState extends State<ProfilePage> {
   void initState() {
     super.initState();
     fetchProfile();
+    _checkBiometricStatus();
+  }
+
+  Future<void> _checkBiometricStatus() async {
+    final token = await secureStorage.read(key: 'biometric_token');
+    setState(() {
+      isBiometricEnabled = token != null;
+    });
   }
 
   Future<void> fetchProfile() async {
@@ -38,12 +50,61 @@ class _ProfilePageState extends State<ProfilePage> {
     });
   }
 
+  Future<void> _enableBiometricLogin() async {
+    try {
+      final isAuthenticated = await localAuth.authenticate(
+        localizedReason:
+            'Pindai biometrik Anda untuk mengaktifkan login biometrik',
+        options: const AuthenticationOptions(stickyAuth: true),
+      );
+
+      if (isAuthenticated) {
+        final session = supabase.auth.currentSession;
+        if (session != null) {
+          await secureStorage.write(
+            key: 'biometric_token',
+            value: session.refreshToken,
+          );
+          setState(() => isBiometricEnabled = true);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Login biometrik berhasil diaktifkan!'),
+            ),
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Verifikasi biometrik dibatalkan.')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      setState(() => isBiometricEnabled = false);
+    }
+  }
+
+  Future<void> _disableBiometricLogin() async {
+    try {
+      await secureStorage.delete(key: 'biometric_token');
+      setState(() => isBiometricEnabled = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Login biometrik berhasil dinonaktifkan.'),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (profileData == null) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     final fullName = profileData!['full_name'];
@@ -69,8 +130,14 @@ class _ProfilePageState extends State<ProfilePage> {
             children: [
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-                margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 24,
+                ),
+                margin: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFF4B2E2B),
                   borderRadius: BorderRadius.circular(10),
@@ -79,7 +146,9 @@ class _ProfilePageState extends State<ProfilePage> {
                   children: [
                     const CircleAvatar(
                       radius: 45,
-                      backgroundImage: AssetImage('assets/images/photoprofile.png'),
+                      backgroundImage: AssetImage(
+                        'assets/images/photoprofile.png',
+                      ),
                     ),
                     const SizedBox(width: 20),
                     Expanded(
@@ -95,15 +164,22 @@ class _ProfilePageState extends State<ProfilePage> {
                             overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(height: 4),
-                          Text(role, style: const TextStyle(color: Colors.white70)),
+                          Text(
+                            role,
+                            style: const TextStyle(color: Colors.white70),
+                          ),
                           const SizedBox(height: 4),
-                          Text(email,
-                              style: const TextStyle(color: Colors.white70),
-                              overflow: TextOverflow.ellipsis),
+                          Text(
+                            email,
+                            style: const TextStyle(color: Colors.white70),
+                            overflow: TextOverflow.ellipsis,
+                          ),
                           const SizedBox(height: 4),
-                          Text(nim,
-                              style: const TextStyle(color: Colors.white70),
-                              overflow: TextOverflow.ellipsis),
+                          Text(
+                            nim,
+                            style: const TextStyle(color: Colors.white70),
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ],
                       ),
                     ),
@@ -120,12 +196,10 @@ class _ProfilePageState extends State<ProfilePage> {
                   inactiveThumbColor: Colors.grey,
                   inactiveTrackColor: Colors.grey.shade300,
                   onChanged: (val) {
-                    setState(() => isBiometricEnabled = val);
                     if (val) {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const FaceIDPage()),
-                      );
+                      _enableBiometricLogin();
+                    } else {
+                      _disableBiometricLogin();
                     }
                   },
                 ),
