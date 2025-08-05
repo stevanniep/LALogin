@@ -41,9 +41,7 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     if (profileData == null) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     final fullName = profileData!['full_name'];
@@ -69,8 +67,14 @@ class _ProfilePageState extends State<ProfilePage> {
             children: [
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-                margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 24,
+                ),
+                margin: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFF4B2E2B),
                   borderRadius: BorderRadius.circular(10),
@@ -79,7 +83,9 @@ class _ProfilePageState extends State<ProfilePage> {
                   children: [
                     const CircleAvatar(
                       radius: 45,
-                      backgroundImage: AssetImage('assets/images/photoprofile.png'),
+                      backgroundImage: AssetImage(
+                        'assets/images/photoprofile.png',
+                      ),
                     ),
                     const SizedBox(width: 20),
                     Expanded(
@@ -95,15 +101,22 @@ class _ProfilePageState extends State<ProfilePage> {
                             overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(height: 4),
-                          Text(role, style: const TextStyle(color: Colors.white70)),
+                          Text(
+                            role,
+                            style: const TextStyle(color: Colors.white70),
+                          ),
                           const SizedBox(height: 4),
-                          Text(email,
-                              style: const TextStyle(color: Colors.white70),
-                              overflow: TextOverflow.ellipsis),
+                          Text(
+                            email,
+                            style: const TextStyle(color: Colors.white70),
+                            overflow: TextOverflow.ellipsis,
+                          ),
                           const SizedBox(height: 4),
-                          Text(nim,
-                              style: const TextStyle(color: Colors.white70),
-                              overflow: TextOverflow.ellipsis),
+                          Text(
+                            nim,
+                            style: const TextStyle(color: Colors.white70),
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ],
                       ),
                     ),
