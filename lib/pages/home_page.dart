@@ -54,7 +54,6 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _fetchTodaySchedules() async {
-    // Pastikan _isLoading diatur ke true sebelum memulai fetching
     if (mounted) {
       setState(() {
         _isLoading = true;
@@ -98,7 +97,6 @@ class _HomePageState extends State<HomePage> {
       print('DEBUG ERROR: Gagal memuat jadwal hari ini: $e');
       _showSnackBar('Gagal memuat jadwal hari ini: $e', isError: true);
     } finally {
-      // Pastikan _isLoading diatur ke false, terlepas dari keberhasilan atau kegagalan
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -186,7 +184,7 @@ class _HomePageState extends State<HomePage> {
   final List<String> _titles = ['Beranda', 'Proyek', 'Scan', 'Forum', 'Profil'];
 
   List<Widget> get _pages => [
-    _buildHomeScreen(), // Ini akan rebuild sesuai perubahan state
+    _buildHomeScreen(),
     const ProjectPage(),
     const ScanPage(),
     const ForumPage(),
@@ -196,14 +194,15 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(child: _pages[_selectedIndex]),
+      backgroundColor: Colors.white,
+      body: _pages[_selectedIndex],
       bottomNavigationBar: Container(
         height: 72,
         decoration: BoxDecoration(
           color: Colors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.black,
+              color: Colors.black.withOpacity(0.1),
               blurRadius: 6,
               offset: const Offset(0, -2),
             ),
@@ -233,7 +232,7 @@ class _HomePageState extends State<HomePage> {
                     Container(
                       height: 4,
                       color: isSelected
-                          ? const Color(0xFF5E4036)
+                          ? const Color(0xFF4B2E2B)
                           : Colors.transparent,
                     ),
                     const SizedBox(height: 8),
@@ -244,7 +243,7 @@ class _HomePageState extends State<HomePage> {
                       style: TextStyle(
                         fontSize: 12,
                         color: isSelected
-                            ? const Color(0xFF5E4036)
+                            ? const Color(0xFF4B2E2B)
                             : Colors.grey,
                         fontWeight: isSelected
                             ? FontWeight.w600
@@ -263,62 +262,62 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildHomeScreen() {
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
-            child: SizedBox(
-              height: 136,
-              child: _isLoading
-                  ? const Center(
-                      child: CircularProgressIndicator(color: Colors.brown),
-                    )
-                  : _todaySchedules.isEmpty
-                  ? Center(child: _buildNoScheduleBox())
-                  : PageView.builder(
-                      controller: _pageController,
-                      itemCount: _todaySchedules.length,
-                      itemBuilder: (context, index) {
-                        return _ScheduleCard(
-                          schedule: _todaySchedules[index],
-                          index: index,
-                          pageController: _pageController,
-                          formatDate: _formatDate,
-                        );
-                      },
-                    ),
-            ),
-          ),
-          const SizedBox(height: 30),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0),
-            child: Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(15),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black,
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+    return SafeArea(
+      // <--- Tambahkan SafeArea di sini
+      child: SingleChildScrollView(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+              child: SizedBox(
+                height: 136,
+                child: _isLoading
+                    ? const Center(
+                        child: CircularProgressIndicator(
+                          color: Color(0xFF4B2E2B),
+                        ),
+                      )
+                    : _todaySchedules.isEmpty
+                    ? Center(child: _buildNoScheduleBox())
+                    : PageView.builder(
+                        controller: _pageController,
+                        itemCount: _todaySchedules.length,
+                        itemBuilder: (context, index) {
+                          return _ScheduleCard(
+                            schedule: _todaySchedules[index],
+                            index: index,
+                            pageController: _pageController,
+                            formatDate: _formatDate,
+                          );
+                        },
+                      ),
               ),
-              child: Column(
-                children: [
-                  GridView.count(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    crossAxisCount: 4,
-                    mainAxisSpacing: 20,
-                    crossAxisSpacing: 10,
-                    childAspectRatio: 0.8,
+            ),
+            const SizedBox(height: 100),
+            Center(
+              child: Container(
+                width: 340,
+                height: 140,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 4,
+                      spreadRadius: 1,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Center(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       _buildGridItem(
                         iconPath: 'assets/icons/contact.png',
-                        label: 'Kontak Admin',
+                        label: 'Kontak\nAdmin',
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -328,7 +327,7 @@ class _HomePageState extends State<HomePage> {
                       ),
                       _buildGridItem(
                         iconPath: 'assets/icons/clock.png',
-                        label: 'Riwayat Presensi',
+                        label: 'Riwayat\nPresensi',
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -338,7 +337,7 @@ class _HomePageState extends State<HomePage> {
                       ),
                       _buildGridItem(
                         iconPath: 'assets/icons/bikeman.png',
-                        label: 'Riwayat Aktivitas',
+                        label: 'Riwayat\nAktivitas',
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -348,7 +347,7 @@ class _HomePageState extends State<HomePage> {
                       ),
                       _buildGridItem(
                         iconPath: 'assets/icons/chart.png',
-                        label: 'Statistik Asisten',
+                        label: 'Statistik\nsisten',
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -358,11 +357,11 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ],
                   ),
-                ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -378,23 +377,38 @@ class _HomePageState extends State<HomePage> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            // Disesuaikan dengan konfigurasi box admin
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
-              color: Colors.grey[100],
-              borderRadius: BorderRadius.circular(10),
+              color: const Color(
+                0xFFD9D9D9,
+              ), // Warna abu-abu yang sama dengan admin
+              borderRadius: BorderRadius.circular(
+                8,
+              ), // Radius yang sama dengan admin
             ),
-            child: Image.asset(
-              iconPath,
-              width: 30,
-              height: 30,
-              color: Colors.grey[700],
+            child: Center(
+              child: Image.asset(
+                iconPath,
+                width: 24, // Ukuran ikon yang sama dengan admin
+                height: 24, // Ukuran ikon yang sama dengan admin
+                color: const Color(0xFF4B2E2B),
+              ),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(
+            height: 6,
+          ), // Jarak antara ikon dan label yang sama dengan admin
           Text(
             label,
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 12, color: Colors.grey[800]),
+            style: const TextStyle(
+              fontFamily: 'Poppins',
+              fontWeight: FontWeight.w500, // Medium
+              fontSize: 11, // Ukuran font yang sama dengan admin
+              color: Colors.black, // Warna teks yang sama dengan admin
+            ),
           ),
         ],
       ),

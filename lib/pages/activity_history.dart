@@ -6,62 +6,98 @@ class ActivityHistoryPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF5E4036)),
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
-        ),
-        title: const Text(
-          'Riwayat Aktivitas',
-          style: TextStyle(
-            color: Color(0xFF5E4036),
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: false,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: ListView(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Column(
           children: [
-            // List item aktivitas. Gunakan _buildActivityItem untuk setiap item.
-            _buildActivityItem(
-              title: 'Eksperimen',
-              description: 'mencoba melakukan hal baru',
-              duration: '1 jam',
-              date: '22/08/25',
+            // Custom AppBar
+            Container(
+              padding: const EdgeInsets.only(
+                top: 12,
+                left: 16,
+                right: 16,
+                bottom: 12,
+              ),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    offset: const Offset(0, 2),
+                    blurRadius: 4,
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.of(context).pop();
+                    },
+                    // Ganti dengan path aset yang benar untuk ikon kembali Anda
+                    child: Image.asset(
+                      'assets/icons/kembali.png',
+                      width: 24,
+                      height: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Text(
+                    'Riwayat Aktivitas',
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                      color: Color(0xFF4B2E2B),
+                    ),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 15),
-            _buildActivityItem(
-              title: 'Coding',
-              description: 'mencoba melakukan hal baru',
-              duration: '2 jam',
-              date: '22/08/25',
-            ),
-            const SizedBox(height: 15),
-            _buildActivityItem(
-              title: 'Membaca Jurnal',
-              description: 'mencoba melakukan hal baru',
-              duration: '4 jam',
-              date: '21/08/25',
-            ),
-            const SizedBox(height: 15),
-            _buildActivityItem(
-              title: 'Diskusi Riset',
-              description: 'mencoba melakukan hal baru',
-              duration: '30 menit',
-              date: '21/08/25',
-            ),
-            const SizedBox(height: 15),
-            _buildActivityItem(
-              title: 'Menulis Dokumentasi',
-              description: 'mencoba melakukan hal baru',
-              duration: '20 menit',
-              date: '20/08/25',
+            // Body Content
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: ListView(
+                  children: [
+                    // List item aktivitas. Gunakan _buildActivityItem untuk setiap item.
+                    _buildActivityItem(
+                      title: 'Eksperimen',
+                      description: 'mencoba melakukan hal baru',
+                      duration: '1 jam',
+                      date: '22/08/25',
+                    ),
+                    const SizedBox(height: 15),
+                    _buildActivityItem(
+                      title: 'Coding',
+                      description: 'mencoba melakukan hal baru',
+                      duration: '2 jam',
+                      date: '22/08/25',
+                    ),
+                    const SizedBox(height: 15),
+                    _buildActivityItem(
+                      title: 'Membaca Jurnal',
+                      description: 'mencoba melakukan hal baru',
+                      duration: '4 jam',
+                      date: '21/08/25',
+                    ),
+                    const SizedBox(height: 15),
+                    _buildActivityItem(
+                      title: 'Diskusi Riset',
+                      description: 'mencoba melakukan hal baru',
+                      duration: '30 menit',
+                      date: '21/08/25',
+                    ),
+                    const SizedBox(height: 15),
+                    _buildActivityItem(
+                      title: 'Menulis Dokumentasi',
+                      description: 'mencoba melakukan hal baru',
+                      duration: '20 menit',
+                      date: '20/08/25',
+                    ),
+                  ],
+                ),
+              ),
             ),
           ],
         ),
@@ -79,7 +115,7 @@ class ActivityHistoryPage extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF5E4036),
+        color: const Color(0xFF4B2E2B), // Mengganti warna coklat
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
@@ -134,4 +170,3 @@ class ActivityHistoryPage extends StatelessWidget {
     );
   }
 }
-

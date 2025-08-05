@@ -122,32 +122,64 @@ class _AdminContactPageState extends State<AdminContactPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF5E4036)),
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Custom AppBar yang disamakan dengan TambahJadwalPage
+            Container(
+              padding: const EdgeInsets.only(
+                top: 12,
+                left: 16,
+                right: 16,
+                bottom: 12,
+              ),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    offset: const Offset(0, 2),
+                    blurRadius: 4,
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: Image.asset(
+                      'assets/icons/kembali.png', // Pastikan path aset ini benar
+                      width: 24,
+                      height: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Text(
+                    'Kontak Admin',
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                      color: Color(0xFF4B2E2B),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(child: _buildBody()),
+          ],
         ),
-        title: const Text(
-          'Kontak Admin',
-          style: TextStyle(
-            color: Color(0xFF5E4036),
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: false,
       ),
-      body: _buildBody(),
     );
   }
 
   Widget _buildBody() {
     if (_isLoading) {
       return const Center(
-        child: CircularProgressIndicator(color: Color(0xFF5E4036)),
+        child: CircularProgressIndicator(color: Color(0xFF4B2E2B)),
       );
     }
 
@@ -169,12 +201,13 @@ class _AdminContactPageState extends State<AdminContactPage> {
             const Text(
               'Tidak ada admin yang ditemukan.',
               style: TextStyle(color: Colors.grey),
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 10),
             ElevatedButton(
               onPressed: _fetchAdminContacts,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF5E4036),
+                backgroundColor: const Color(0xFF4B2E2B),
                 foregroundColor: Colors.white,
               ),
               child: const Text('Coba Lagi'),
@@ -212,6 +245,7 @@ class _AdminContactPageState extends State<AdminContactPage> {
   }) {
     return Card(
       elevation: 4,
+      color: Colors.white, // Menetapkan warna box menjadi putih
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       margin: const EdgeInsets.only(bottom: 20),
       child: Padding(
@@ -220,7 +254,7 @@ class _AdminContactPageState extends State<AdminContactPage> {
           children: [
             const CircleAvatar(
               radius: 30,
-              backgroundColor: Color(0xFF5E4036),
+              backgroundColor: Color(0xFF4B2E2B),
               child: Icon(Icons.person, size: 30, color: Colors.white),
             ),
             const SizedBox(width: 20),
@@ -233,7 +267,7 @@ class _AdminContactPageState extends State<AdminContactPage> {
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF5E4036),
+                      color: Color(0xFF4B2E2B),
                     ),
                   ),
                   const SizedBox(height: 5),
