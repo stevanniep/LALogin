@@ -1,6 +1,8 @@
+// File: project_page.dart
+
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'labproject_page.dart'; // Ganti sesuai file tujuan
+import 'labproject_page.dart';
 import 'dailyactivity_page.dart';
 
 class ProjectPage extends StatefulWidget {
@@ -20,8 +22,7 @@ class _ProjectPageState extends State<ProjectPage> {
     final user = Supabase.instance.client.auth.currentUser;
     if (user != null) {
       _currentUserId = user.id;
-      _projectsFuture =
-          _fetchUserProjects(); // Ambil data setelah dapat user ID
+      _projectsFuture = _fetchUserProjects();
     } else {
       _projectsFuture = Future.value([]);
     }
@@ -31,7 +32,6 @@ class _ProjectPageState extends State<ProjectPage> {
     try {
       if (_currentUserId == null) return [];
 
-      // Ambil username dari tabel profiles
       final profile = await Supabase.instance.client
           .from('profiles')
           .select('username')
@@ -41,7 +41,6 @@ class _ProjectPageState extends State<ProjectPage> {
       final username = profile?['username'];
       if (username == null) return [];
 
-      // Ambil daftar project_id dari tabel project_contributors
       final contributorProjects = await Supabase.instance.client
           .from('project_contributors')
           .select('project_id')
@@ -53,7 +52,6 @@ class _ProjectPageState extends State<ProjectPage> {
 
       if (contributorProjectIds.isEmpty) return [];
 
-      // Ambil detail proyek dari tabel projects
       final response = await Supabase.instance.client
           .from('projects')
           .select('id, title')
@@ -129,22 +127,25 @@ class _ProjectPageState extends State<ProjectPage> {
               ),
             ],
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          alignment: Alignment.centerLeft,
           child: const SafeArea(
-            child: Text(
-              'Proyek',
-              style: TextStyle(
-                fontFamily: 'Poppins',
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-                color: Color(0xFF4B2E2B),
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Proyek',
+                  style: TextStyle(
+                    fontFamily: 'Poppins',
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                    color: Color(0xFF4B2E2B),
+                  ),
+                ),
               ),
             ),
           ),
         ),
       ),
-
       body: FutureBuilder<List<Map<String, dynamic>>>(
         future: _projectsFuture,
         builder: (context, snapshot) {
