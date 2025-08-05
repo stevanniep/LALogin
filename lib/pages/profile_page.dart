@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:local_auth/local_auth.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'edit_profile_page.dart';
-// import 'faceid_page.dart'; // Hapus impor ini
+import 'faceid_page.dart';
 import '../screens/login_regist.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -16,8 +14,6 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   final supabase = Supabase.instance.client;
-  final localAuth = LocalAuthentication();
-  final secureStorage = const FlutterSecureStorage();
   bool isBiometricEnabled = false;
   Map<String, dynamic>? profileData;
 
@@ -25,14 +21,6 @@ class _ProfilePageState extends State<ProfilePage> {
   void initState() {
     super.initState();
     fetchProfile();
-    _checkBiometricStatus();
-  }
-
-  Future<void> _checkBiometricStatus() async {
-    final token = await secureStorage.read(key: 'biometric_token');
-    setState(() {
-      isBiometricEnabled = token != null;
-    });
   }
 
   Future<void> fetchProfile() async {
@@ -48,57 +36,6 @@ class _ProfilePageState extends State<ProfilePage> {
     setState(() {
       profileData = Map<String, dynamic>.from(response);
     });
-  }
-
-  Future<void> _enableBiometricLogin() async {
-    try {
-      final isAuthenticated = await localAuth.authenticate(
-        localizedReason:
-            'Pindai biometrik Anda untuk mengaktifkan login biometrik',
-        options: const AuthenticationOptions(stickyAuth: true),
-      );
-
-      if (isAuthenticated) {
-        final session = supabase.auth.currentSession;
-        if (session != null) {
-          await secureStorage.write(
-            key: 'biometric_token',
-            value: session.refreshToken,
-          );
-          setState(() => isBiometricEnabled = true);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Login biometrik berhasil diaktifkan!'),
-            ),
-          );
-        }
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Verifikasi biometrik dibatalkan.')),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error: $e')));
-      setState(() => isBiometricEnabled = false);
-    }
-  }
-
-  Future<void> _disableBiometricLogin() async {
-    try {
-      await secureStorage.delete(key: 'biometric_token');
-      setState(() => isBiometricEnabled = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Login biometrik berhasil dinonaktifkan.'),
-        ),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error: $e')));
-    }
   }
 
   @override
@@ -196,10 +133,12 @@ class _ProfilePageState extends State<ProfilePage> {
                   inactiveThumbColor: Colors.grey,
                   inactiveTrackColor: Colors.grey.shade300,
                   onChanged: (val) {
+                    setState(() => isBiometricEnabled = val);
                     if (val) {
-                      _enableBiometricLogin();
-                    } else {
-                      _disableBiometricLogin();
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const FaceIDPage()),
+                      );
                     }
                   },
                 ),
