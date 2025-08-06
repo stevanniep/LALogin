@@ -21,7 +21,11 @@ class EmailVerificationNoticePage extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.email_outlined, size: 80, color: Colors.brown),
+              const Icon(
+                Icons.email_outlined,
+                size: 80,
+                color: Color(0xFF4B2E2B),
+              ),
               const SizedBox(height: 24),
               Text(
                 'Halo $fullName,\nKami telah mengirim link verifikasi ke email:\n$email\n\nSilakan periksa dan klik link tersebut untuk mengaktifkan akun.',

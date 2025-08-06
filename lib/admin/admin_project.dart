@@ -59,6 +59,7 @@ class _AdminProjectPageState extends State<AdminProjectPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white, // Background halaman diubah menjadi putih
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(60),
         child: Container(

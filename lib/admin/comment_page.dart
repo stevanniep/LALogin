@@ -46,18 +46,45 @@ class _CommentPageState extends State<CommentPage> {
     });
   }
 
+  // Fungsi untuk menampilkan snackbar
+  void _showSnackBar(String message, {bool isError = false}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? Colors.red : const Color(0xFF4B2E2B),
+        duration: const Duration(
+          milliseconds: 1500,
+        ), // Konsisten dengan durasi sebelumnya
+      ),
+    );
+  }
+
   Future<void> addComment(String content) async {
     final user = supabase.auth.currentUser;
-    if (user == null) return;
+    if (user == null) {
+      _showSnackBar('Anda harus login untuk berkomentar.', isError: true);
+      return;
+    }
 
-    await supabase.from('comments').insert({
-      'post_id': widget.postId,
-      'user_id': user.id,
-      'comment': content,
-    });
+    if (content.isEmpty) {
+      _showSnackBar('Komentar tidak boleh kosong.', isError: true);
+      return;
+    }
 
-    _controller.clear();
-    fetchPostAndComments();
+    try {
+      await supabase.from('comments').insert({
+        'post_id': widget.postId,
+        'user_id': user.id,
+        'comment': content,
+      });
+
+      _controller.clear();
+      fetchPostAndComments();
+      _showSnackBar('Komentar berhasil ditambahkan!');
+    } catch (e) {
+      _showSnackBar('Gagal menambahkan komentar: $e', isError: true);
+    }
   }
 
   @override
@@ -70,11 +97,55 @@ class _CommentPageState extends State<CommentPage> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFFAF9F9),
-      appBar: AppBar(
-        title: const Text('Komentar'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0.5,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(60),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                offset: const Offset(0, 2),
+                blurRadius: 4,
+              ),
+            ],
+          ),
+          child: SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.only(
+                top: 12,
+                left: 16,
+                right: 16,
+                bottom: 12,
+              ),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.pop(context);
+                    },
+                    child: Image.asset(
+                      'assets/icons/kembali.png',
+                      width: 24,
+                      height: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Text(
+                    'Komentar',
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                      color: Color(0xFF4B2E2B),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
       body: Column(
         children: [
@@ -82,7 +153,9 @@ class _CommentPageState extends State<CommentPage> {
           if (mainPost != null)
             Card(
               margin: const EdgeInsets.fromLTRB(12, 12, 12, 6),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
               elevation: 2,
               color: Colors.white,
               child: Padding(
@@ -92,11 +165,21 @@ class _CommentPageState extends State<CommentPage> {
                   children: [
                     Row(
                       children: [
-                        Image.asset('assets/icons/forumpp.png', width: 32, height: 32),
+                        Image.asset(
+                          'assets/icons/forumpp.png',
+                          width: 32,
+                          height: 32,
+                        ),
                         const SizedBox(width: 8),
-                        Text(postUsername, style: const TextStyle(fontWeight: FontWeight.bold)),
+                        Text(
+                          postUsername,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
                         const Spacer(),
-                        Text(postTime, style: const TextStyle(color: Colors.grey)),
+                        Text(
+                          postTime,
+                          style: const TextStyle(color: Colors.grey),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 16),
@@ -140,7 +223,9 @@ class _CommentPageState extends State<CommentPage> {
 
                       return Card(
                         margin: const EdgeInsets.fromLTRB(12, 4, 12, 8),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                         elevation: 1,
                         color: Colors.white,
                         child: Padding(
@@ -150,11 +235,23 @@ class _CommentPageState extends State<CommentPage> {
                             children: [
                               Row(
                                 children: [
-                                  Image.asset('assets/icons/forumpp.png', width: 32, height: 32),
+                                  Image.asset(
+                                    'assets/icons/forumpp.png',
+                                    width: 32,
+                                    height: 32,
+                                  ),
                                   const SizedBox(width: 16),
-                                  Text(username, style: const TextStyle(fontWeight: FontWeight.bold)),
+                                  Text(
+                                    username,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                                   const Spacer(),
-                                  Text(time, style: const TextStyle(color: Colors.grey)),
+                                  Text(
+                                    time,
+                                    style: const TextStyle(color: Colors.grey),
+                                  ),
                                 ],
                               ),
                               const SizedBox(height: 16),
@@ -175,9 +272,17 @@ class _CommentPageState extends State<CommentPage> {
                 Expanded(
                   child: TextField(
                     controller: _controller,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       hintText: 'Tulis komentar...',
-                      border: OutlineInputBorder(),
+                      border: const OutlineInputBorder(),
+                      focusedBorder: OutlineInputBorder(
+                        // Mengubah warna saat fokus
+                        borderRadius: BorderRadius.circular(4),
+                        borderSide: const BorderSide(
+                          color: Color(0xFF4B2E2B), // Warna yang diinginkan
+                          width: 2.0,
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -189,7 +294,7 @@ class _CommentPageState extends State<CommentPage> {
                   ),
                   onPressed: () {
                     final text = _controller.text.trim();
-                    if (text.isNotEmpty) addComment(text);
+                    addComment(text); // Memanggil fungsi addComment
                   },
                   child: const Icon(Icons.send, color: Colors.white),
                 ),
