@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'admin_tambah_jadwal.dart';
 import 'admin_tambah_proyek.dart';
 import 'admin_data_asisten.dart';
+import 'admin_presensi.dart';
 
 class AdminBeranda extends StatefulWidget {
   const AdminBeranda({super.key});
@@ -253,9 +254,17 @@ class _AdminBerandaState extends State<AdminBeranda> {
                             _fetchTodaySchedules(); // Refresh jadwal setelah kembali
                           },
                         ),
-                        const _MenuIcon(
+                        _MenuIcon(
                           iconPath: 'assets/adm/qr.png',
                           label: 'Membuat\nPresensi',
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => AdminPresensi(),
+                              ),
+                            );
+                          },
                         ),
                         _MenuIcon(
                           iconPath: 'assets/adm/data.png',
