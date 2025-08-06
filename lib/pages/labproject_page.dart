@@ -12,26 +12,24 @@ class LabProjectPage extends StatefulWidget {
 }
 
 class _LabProjectPageState extends State<LabProjectPage> {
-  // Gunakan Future untuk mengambil data awal proyek
   late Future<Map<String, dynamic>> _projectDetailsFuture;
-
-  // Variabel untuk menyimpan status checkbox sementara
   late List<Map<String, dynamic>> _stages;
+
+  static const Color _brownColor = Color(0xFF4B2E2B);
 
   @override
   void initState() {
     super.initState();
+    Intl.defaultLocale = 'id_ID';
     _projectDetailsFuture = _fetchAndInitializeStages();
   }
 
   Future<Map<String, dynamic>> _fetchAndInitializeStages() async {
     final data = await _fetchProjectDetails();
-    // Simpan data stages ke variabel _stages untuk dimanipulasi secara lokal
     _stages = List<Map<String, dynamic>>.from(data['stages']);
     return data;
   }
 
-  // Fungsi asli untuk mengambil data dari Supabase
   Future<Map<String, dynamic>> _fetchProjectDetails() async {
     try {
       final projectData = await Supabase.instance.client
@@ -56,23 +54,31 @@ class _LabProjectPageState extends State<LabProjectPage> {
     }
   }
 
-  // Fungsi baru untuk memperbarui semua perubahan saat tombol "Simpan" ditekan
+  // Fungsi untuk menampilkan snackbar
+  void _showSnackBar(String message, {bool isError = false}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? Colors.red : _brownColor,
+        duration: const Duration(
+          milliseconds: 1500,
+        ), // Durasi default seperti di kode asli
+      ),
+    );
+  }
+
   Future<void> _saveChanges() async {
     try {
-      // Ambil hanya tahap yang berubah
       final stagesToUpdate = _stages
           .where((stage) => stage.containsKey('has_changed'))
           .toList();
 
       if (stagesToUpdate.isEmpty) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Tidak ada perubahan untuk disimpan.')),
-        );
+        _showSnackBar('Tidak ada perubahan untuk disimpan.');
         return;
       }
 
-      // Buat list dari Future untuk setiap update
       final List<Future<dynamic>> updateFutures = stagesToUpdate.map((stage) {
         return Supabase.instance.client
             .from('project_stages')
@@ -87,42 +93,21 @@ class _LabProjectPageState extends State<LabProjectPage> {
 
       await Future.wait(updateFutures);
 
-      // Setelah update berhasil, refresh data
       setState(() {
         _projectDetailsFuture = _fetchAndInitializeStages();
       });
 
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Perubahan berhasil disimpan!'),
-          duration: Duration(milliseconds: 1500),
-        ),
-      );
+      _showSnackBar('Perubahan berhasil disimpan!');
     } on PostgrestException catch (e) {
       debugPrint('Error saving changes: ${e.message}');
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Gagal menyimpan perubahan: ${e.message}'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      _showSnackBar('Gagal menyimpan perubahan: ${e.message}', isError: true);
     } catch (e) {
       debugPrint('Error saving changes: $e');
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Gagal menyimpan perubahan. Coba lagi.'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      _showSnackBar('Gagal menyimpan perubahan. Coba lagi.', isError: true);
     }
   }
 
-  // Widget pembangun untuk setiap item tahap dengan checkbox
   Widget _buildStageItem(int index) {
-    // Ambil data dari list lokal
     final stage = _stages[index];
     final stageName = stage['stage_name'] as String;
     final isCompleted = stage['is_completed'] as bool;
@@ -131,36 +116,52 @@ class _LabProjectPageState extends State<LabProjectPage> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            stageName,
-            style: TextStyle(fontSize: 16, color: Colors.grey[800]),
+          Expanded(
+            child: Text(
+              stageName,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w400,
+                color: Colors.black,
+              ),
+            ),
           ),
-          Checkbox(
-            value: isCompleted,
-            onChanged: (bool? newValue) {
-              if (newValue != null) {
-                setState(() {
-                  _stages[index]['is_completed'] = newValue;
-                  _stages[index]['has_changed'] = true;
-                });
-              }
-            },
-            activeColor: const Color(0xFF5E4036),
-            checkColor: Colors.white,
-            shape: RoundedRectangleBorder(
+          const SizedBox(width: 16),
+          Container(
+            width: 23,
+            height: 23,
+            decoration: BoxDecoration(
+              color: isCompleted ? _brownColor : Colors.transparent,
+              border: Border.all(
+                color: hasChanged ? Colors.orange : _brownColor,
+                width: 1.5,
+              ),
               borderRadius: BorderRadius.circular(4),
             ),
-            side: WidgetStateBorderSide.resolveWith(
-              (states) => BorderSide(
-                width: 1.5,
-                color: hasChanged
-                    ? Colors
-                          .orange // Tanda bahwa ini sudah diubah
-                    : states.contains(WidgetState.selected)
-                    ? const Color(0xFF5E4036)
-                    : Colors.grey.shade500,
+            child: Theme(
+              data: ThemeData(
+                unselectedWidgetColor: Colors.transparent,
+                checkboxTheme: CheckboxThemeData(
+                  side: BorderSide.none,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ),
+              child: Checkbox(
+                value: isCompleted,
+                onChanged: (bool? newValue) {
+                  if (newValue != null) {
+                    setState(() {
+                      _stages[index]['is_completed'] = newValue;
+                      _stages[index]['has_changed'] = true;
+                    });
+                  }
+                },
+                activeColor: Colors.transparent,
+                checkColor: Colors.white,
               ),
             ),
           ),
@@ -169,7 +170,6 @@ class _LabProjectPageState extends State<LabProjectPage> {
     );
   }
 
-  // ... (Fungsi _formatDate dan _formatDateRange tetap sama)
   String _formatDate(String? dateString) {
     if (dateString == null) return 'N/A';
     try {
@@ -200,101 +200,151 @@ class _LabProjectPageState extends State<LabProjectPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF5E4036)),
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
-        ),
-        title: const Text(
-          'Detail Proyek',
-          style: TextStyle(
-            color: Color(0xFF5E4036),
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: false,
-      ),
-      body: FutureBuilder<Map<String, dynamic>>(
-        future: _projectDetailsFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(color: Color(0xFF5E4036)),
-            );
-          } else if (snapshot.hasError) {
-            return Center(child: Text(snapshot.error.toString()));
-          } else if (!snapshot.hasData || snapshot.data!['project'] == null) {
-            return const Center(child: Text('Data proyek tidak ditemukan.'));
-          }
-
-          final projectData = snapshot.data!['project'] as Map<String, dynamic>;
-          final projectTitle = projectData['title'] ?? 'Proyek Tanpa Judul';
-          final startDate = projectData['start_date'] as String?;
-          final endDate = projectData['end_date'] as String?;
-
-          return SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 20.0,
-                vertical: 15.0,
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Custom AppBar
+            Container(
+              padding: const EdgeInsets.only(
+                top: 12,
+                left: 16,
+                right: 16,
+                bottom: 12,
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    offset: const Offset(0, 2),
+                    blurRadius: 4,
+                  ),
+                ],
+              ),
+              child: Row(
                 children: [
-                  Text(
-                    projectTitle,
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF5E4036),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: Image.asset(
+                      'assets/icons/kembali.png',
+                      width: 24,
+                      height: 24,
                     ),
                   ),
-                  const SizedBox(height: 5),
-                  Text(
-                    _formatDateRange(startDate, endDate),
-                    style: const TextStyle(fontSize: 14, color: Colors.grey),
-                  ),
-                  const SizedBox(height: 30),
-                  Column(
-                    children: List.generate(
-                      _stages.length,
-                      (index) => _buildStageItem(index),
-                    ),
-                  ),
-                  const SizedBox(height: 50),
-                  Center(
-                    child: ElevatedButton(
-                      onPressed: _saveChanges, // Panggil fungsi _saveChanges
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF5E4036),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 50,
-                          vertical: 15,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        elevation: 5,
-                      ),
-                      child: const Text(
-                        'Simpan',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                  const SizedBox(width: 12),
+                  const Text(
+                    'Detail Proyek',
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                      color: _brownColor,
                     ),
                   ),
                 ],
               ),
             ),
-          );
-        },
+            const SizedBox(height: 40),
+            // Body Content
+            Expanded(
+              child: FutureBuilder<Map<String, dynamic>>(
+                future: _projectDetailsFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(
+                      child: CircularProgressIndicator(color: _brownColor),
+                    );
+                  } else if (snapshot.hasError) {
+                    return Center(child: Text(snapshot.error.toString()));
+                  } else if (!snapshot.hasData ||
+                      snapshot.data!['project'] == null) {
+                    return const Center(
+                      child: Text('Data proyek tidak ditemukan.'),
+                    );
+                  }
+
+                  final projectData =
+                      snapshot.data!['project'] as Map<String, dynamic>;
+                  final projectTitle =
+                      projectData['title'] ?? 'Proyek Tanpa Judul';
+                  final startDate = projectData['start_date'] as String?;
+                  final endDate = projectData['end_date'] as String?;
+
+                  return SingleChildScrollView(
+                    child: Center(
+                      child: SizedBox(
+                        width: 300,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              projectTitle,
+                              style: const TextStyle(
+                                fontFamily: 'Poppins',
+                                fontSize: 20,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              _formatDateRange(startDate, endDate),
+                              style: const TextStyle(
+                                fontFamily: 'Poppins',
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.black,
+                              ),
+                            ),
+                            const SizedBox(height: 30),
+                            Column(
+                              children: List.generate(
+                                _stages.length,
+                                (index) => _buildStageItem(index),
+                              ),
+                            ),
+                            const SizedBox(height: 50),
+                            Center(
+                              child: SizedBox(
+                                width: 248,
+                                height: 40,
+                                child: ElevatedButton(
+                                  onPressed: _saveChanges,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: _brownColor,
+                                    foregroundColor: Colors.white,
+                                    padding: EdgeInsets
+                                        .zero, // Padding diatur ke nol karena kita sudah menggunakan SizedBox
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    elevation: 5,
+                                  ),
+                                  child: const Text(
+                                    'Simpan',
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
