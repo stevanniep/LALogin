@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-// Halaman Riwayat Aktivitas
+// Activity History Page
 class ActivityHistoryPage extends StatefulWidget {
   const ActivityHistoryPage({super.key});
 
@@ -10,44 +10,38 @@ class ActivityHistoryPage extends StatefulWidget {
 }
 
 class _ActivityHistoryPageState extends State<ActivityHistoryPage> {
-  // Inisialisasi Supabase client
+  // Initialize Supabase client
   final SupabaseClient _supabase = Supabase.instance.client;
 
-  // Future untuk menyimpan hasil pengambilan data aktivitas
+  // Future to store the activity data retrieval result
   late Future<List<Map<String, dynamic>>> _futureActivities;
 
   @override
   void initState() {
     super.initState();
-    // Memuat data aktivitas saat widget diinisialisasi
+    // Load activity data when the widget is initialized
     _futureActivities = _fetchActivities();
   }
 
-  // Fungsi asinkron untuk mengambil data aktivitas dari Supabase
+  // Asynchronous function to fetch activity data from Supabase
   Future<List<Map<String, dynamic>>> _fetchActivities() async {
     try {
-      // Mendapatkan ID pengguna yang sedang login
+      // Get the ID of the logged-in user
       final userId = _supabase.auth.currentUser!.id;
 
-      // Melakukan kueri ke tabel 'contribution_history'
-      // dan melakukan JOIN dengan tabel 'users_contribution'
-      // Mengambil semua kolom dari kedua tabel
+      // Query the 'users_contribution' table
+      // Filter by the logged-in user's ID
       final data = await _supabase
-          .from('contribution_history')
-          .select(
-            '*, users_contribution(*)',
-          ) // Mengambil semua kolom dari contribution_history dan users_contribution
-          .eq('user_id', userId) // Memfilter berdasarkan user yang sedang login
-          .order(
-            'date',
-            ascending: false,
-          ); // Mengurutkan berdasarkan tanggal terbaru
+          .from('users_contribution')
+          .select() // Select all columns
+          .eq('user_id', userId) // Filter based on the logged-in user
+          .order('date', ascending: false); // Sort by the latest date
 
       return data;
     } catch (e) {
-      // Menangani error jika terjadi masalah saat mengambil data
+      // Handle errors if there's a problem retrieving data
       print('Error fetching activities: $e');
-      return []; // Mengembalikan list kosong jika ada error
+      return []; // Return an empty list if an error occurs
     }
   }
 
@@ -82,7 +76,6 @@ class _ActivityHistoryPageState extends State<ActivityHistoryPage> {
                     onTap: () {
                       Navigator.of(context).pop();
                     },
-                    // Ganti dengan path aset yang benar untuk ikon kembali Anda
                     child: Image.asset(
                       'assets/icons/kembali.png',
                       width: 24,
@@ -104,27 +97,27 @@ class _ActivityHistoryPageState extends State<ActivityHistoryPage> {
             ),
             // Body Content
             Expanded(
-              // Menggunakan FutureBuilder untuk menampilkan data secara asinkron
+              // Use FutureBuilder to display data asynchronously
               child: FutureBuilder<List<Map<String, dynamic>>>(
                 future: _futureActivities,
                 builder: (context, snapshot) {
-                  // Menampilkan indikator loading saat data sedang dimuat
+                  // Display a loading indicator when data is being loaded
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
                   }
-                  // Menampilkan pesan error jika terjadi kesalahan
+                  // Display an error message if an error occurs
                   else if (snapshot.hasError) {
                     return Center(
                       child: Text('Terjadi error: ${snapshot.error}'),
                     );
                   }
-                  // Menampilkan pesan jika tidak ada data
+                  // Display a message if there is no data
                   else if (!snapshot.hasData || snapshot.data!.isEmpty) {
                     return const Center(
                       child: Text('Tidak ada riwayat aktivitas.'),
                     );
                   }
-                  // Menampilkan daftar aktivitas jika data berhasil dimuat
+                  // Display the list of activities if data is successfully loaded
                   else {
                     final activities = snapshot.data!;
                     return Padding(
@@ -135,25 +128,18 @@ class _ActivityHistoryPageState extends State<ActivityHistoryPage> {
                             const SizedBox(height: 15),
                         itemBuilder: (context, index) {
                           final activity = activities[index];
-                          // Mengakses data dari tabel users_contribution yang digabungkan
-                          final contribution = activity['users_contribution'];
 
-                          // Pastikan data 'contribution' tidak null sebelum mengaksesnya
-                          if (contribution == null) {
-                            return const SizedBox.shrink(); // Atau tampilkan placeholder
-                          }
-
+                          // The data is now directly from 'users_contribution'
                           return _buildActivityItem(
                             title:
-                                contribution['activity_kind'] as String? ??
-                                'N/A',
+                                activity['activity_kind'] as String? ?? 'N/A',
                             description:
-                                contribution['activity_desc'] as String? ??
+                                activity['activity_description'] as String? ??
                                 'Tidak ada deskripsi',
                             duration:
-                                '${contribution['time_length'] as int? ?? 0} jam', // Sesuaikan format durasi
+                                '${(activity['time_length'] as num? ?? 0).toInt()} jam',
                             date:
-                                contribution['date'] as String? ??
+                                activity['date'] as String? ??
                                 'Tanggal tidak diketahui',
                           );
                         },
@@ -169,7 +155,7 @@ class _ActivityHistoryPageState extends State<ActivityHistoryPage> {
     );
   }
 
-  // Widget pembangun untuk setiap item aktivitas
+  // Builder widget for each activity item
   Widget _buildActivityItem({
     required String title,
     required String description,
@@ -179,7 +165,7 @@ class _ActivityHistoryPageState extends State<ActivityHistoryPage> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF4B2E2B), // Mengganti warna coklat
+        color: const Color(0xFF4B2E2B), // Replacing the brown color
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
