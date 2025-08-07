@@ -87,7 +87,10 @@ class _ScanPageState extends State<ScanPage> {
             .maybeSingle();
 
         if (existing != null) {
-          _showDialog('Sudah Presensi', 'Kamu sudah melakukan presensi untuk event ini.');
+          _showDialog(
+            'Sudah Presensi',
+            'Kamu sudah melakukan presensi untuk event ini.',
+          );
           return;
         }
 
@@ -226,7 +229,8 @@ class _ScanPageState extends State<ScanPage> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const RiwayatPresensiPage(),
+                                builder: (context) =>
+                                    const RiwayatPresensiPage(),
                               ),
                             );
                           },

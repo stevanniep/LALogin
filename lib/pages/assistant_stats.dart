@@ -1,7 +1,124 @@
 import 'package:flutter/material.dart';
+import 'package:fl_chart/fl_chart.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:intl/intl.dart';
 
-class AssistantStatsPage extends StatelessWidget {
+class AssistantStatsPage extends StatefulWidget {
   const AssistantStatsPage({super.key});
+
+  @override
+  State<AssistantStatsPage> createState() => _AssistantStatsPageState();
+}
+
+class _AssistantStatsPageState extends State<AssistantStatsPage> {
+  // Inisialisasi Supabase client
+  final SupabaseClient supabase = Supabase.instance.client;
+  bool _isLoading = true;
+
+  // Variabel untuk menyimpan data mingguan yang sudah diurutkan
+  List<MapEntry<String, List<BarChartGroupData>>> _allWeeklyData = [];
+
+  // Label untuk hari dalam seminggu (Senin - Sabtu)
+  final List<String> _dayLabels = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchAllWeeklyData();
+  }
+
+  Future<void> _fetchAllWeeklyData() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    final String? userId = supabase.auth.currentUser?.id;
+    if (userId == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
+
+    try {
+      final response = await supabase
+          .from('users_contribution')
+          .select('date, time_length')
+          .eq('user_id', userId)
+          .order('date', ascending: true);
+
+      // Group by week
+      final Map<String, Map<int, double>> weeklyData = {};
+
+      for (var record in response) {
+        final DateTime recordDate = DateTime.parse(record['date']);
+        final int weekday = recordDate.weekday;
+
+        if (weekday > 6) continue; // Skip Sunday
+
+        final weekStart = recordDate.subtract(Duration(days: weekday - 1));
+        final weekKey = DateFormat('yyyy-MM-dd').format(weekStart);
+
+        weeklyData.putIfAbsent(
+          weekKey,
+          () => {for (var i = 1; i <= 6; i++) i: 0.0},
+        );
+        weeklyData[weekKey]![weekday] =
+            (weeklyData[weekKey]![weekday] ?? 0) +
+            (record['time_length'] as num).toDouble();
+      }
+
+      // Ubah ke list dan urutkan berdasarkan tanggal minggu descending (terbaru di atas)
+      final sortedEntries = weeklyData.entries.toList()
+        ..sort(
+          (a, b) => DateTime.parse(b.key).compareTo(DateTime.parse(a.key)),
+        );
+
+      List<MapEntry<String, List<BarChartGroupData>>> chartDataList = [];
+
+      for (var entry in sortedEntries) {
+        List<BarChartGroupData> groups = [];
+        for (int day = 1; day <= 6; day++) {
+          final time = entry.value[day]!;
+          groups.add(
+            BarChartGroupData(
+              x: day,
+              barRods: [
+                BarChartRodData(
+                  toY: time,
+                  color: _getBarColor(day),
+                  width: 20,
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(0),
+                    topRight: Radius.circular(0),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+        chartDataList.add(MapEntry(entry.key, groups));
+      }
+
+      setState(() {
+        _allWeeklyData = chartDataList;
+        _isLoading = false;
+      });
+    } catch (e) {
+      debugPrint('Error fetching data: $e');
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Color _getBarColor(int day) {
+    final List<Color> barColors = [
+      const Color(0xFFD7B899),
+      const Color(0xFFC69C6D),
+      const Color(0xFFA9746E),
+      const Color(0xFF855E42),
+      const Color(0xFF5C4033),
+      const Color(0xFF3B2F2F),
+    ];
+    return barColors[day - 1]; // Menggunakan indeks 0-5
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,11 +151,10 @@ class AssistantStatsPage extends StatelessWidget {
                     onTap: () {
                       Navigator.of(context).pop();
                     },
-                    // Ganti dengan path aset yang benar untuk ikon kembali Anda
-                    child: Image.asset(
-                      'assets/icons/kembali.png',
-                      width: 24,
-                      height: 24,
+                    child: const Icon(
+                      Icons.arrow_back,
+                      color: Color(0xFF4B2E2B),
+                      size: 24,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -56,35 +172,148 @@ class AssistantStatsPage extends StatelessWidget {
             ),
             // Body content
             Expanded(
-              child: SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Column(
-                    children: [
-                      // Grafik Mingguan Pertama
-                      _buildWeeklyChart(
-                        weekLabel: '7/07/25-12/07/25',
-                        data: const [2.0, 3.0, 1.0, 2.0, 4.0, 1.0], // Data jam
-                        maxHeight: 4, // Max jam pada y-axis
+              child: _isLoading
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                        color: Color(0xFF4B2E2B),
                       ),
-                      const SizedBox(height: 30),
-                      // Grafik Mingguan Kedua
-                      _buildWeeklyChart(
-                        weekLabel: '30/06/25-5/07/25',
-                        data: const [5.0, 2.0, 7.0, 4.0, 8.0, 9.0],
-                        maxHeight: 10,
+                    )
+                  : SingleChildScrollView(
+                      child: Padding(
+                        padding: const EdgeInsets.all(20.0),
+                        child: Column(
+                          children: _allWeeklyData.map((entry) {
+                            final DateTime weekStart = DateTime.parse(
+                              entry.key,
+                            );
+                            final DateTime weekEnd = weekStart.add(
+                              const Duration(days: 5),
+                            );
+
+                            final double maxY = entry.value
+                                .map((group) => group.barRods[0].toY)
+                                .fold(0.0, (prev, el) => el > prev ? el : prev);
+                            final double intervalY = maxY <= 1
+                                ? 1
+                                : 2; // Menyesuaikan interval
+
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 24.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  SizedBox(
+                                    height: 200,
+                                    child: BarChart(
+                                      BarChartData(
+                                        barGroups: entry.value,
+                                        alignment:
+                                            BarChartAlignment.spaceAround,
+                                        groupsSpace: 10,
+                                        maxY: (maxY.ceil() + 1).toDouble(),
+                                        titlesData: FlTitlesData(
+                                          leftTitles: AxisTitles(
+                                            sideTitles: SideTitles(
+                                              showTitles: true,
+                                              interval: intervalY,
+                                              reservedSize: 30,
+                                              getTitlesWidget: (value, meta) =>
+                                                  Text(
+                                                    value.toInt().toString(),
+                                                    style: const TextStyle(
+                                                      fontFamily: 'Poppins',
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                      fontSize: 10,
+                                                      color: Colors.black,
+                                                    ),
+                                                  ),
+                                            ),
+                                          ),
+                                          bottomTitles: AxisTitles(
+                                            sideTitles: SideTitles(
+                                              showTitles: true,
+                                              reservedSize: 22,
+                                              getTitlesWidget: (value, meta) {
+                                                final int idx = value.toInt();
+                                                if (idx >= 1 && idx <= 6) {
+                                                  return Text(
+                                                    _dayLabels[idx - 1],
+                                                    style: const TextStyle(
+                                                      fontFamily: 'Poppins',
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                      fontSize: 10,
+                                                      color: Colors.black,
+                                                    ),
+                                                  );
+                                                }
+                                                return const SizedBox.shrink();
+                                              },
+                                            ),
+                                          ),
+                                          topTitles: const AxisTitles(
+                                            sideTitles: SideTitles(
+                                              showTitles: false,
+                                            ),
+                                          ),
+                                          rightTitles: const AxisTitles(
+                                            sideTitles: SideTitles(
+                                              showTitles: false,
+                                            ),
+                                          ),
+                                        ),
+                                        borderData: FlBorderData(
+                                          show: true,
+                                          border: Border(
+                                            bottom: BorderSide(
+                                              color: Colors.grey.withOpacity(
+                                                0.5,
+                                              ),
+                                            ),
+                                            left: const BorderSide(
+                                              color: Colors.transparent,
+                                            ),
+                                            right: const BorderSide(
+                                              color: Colors.transparent,
+                                            ),
+                                            top: const BorderSide(
+                                              color: Colors.transparent,
+                                            ),
+                                          ),
+                                        ),
+                                        gridData: FlGridData(
+                                          show: true,
+                                          drawHorizontalLine: true,
+                                          drawVerticalLine: false,
+                                          horizontalInterval:
+                                              intervalY, // Menggunakan interval yang disesuaikan
+                                          getDrawingHorizontalLine: (value) =>
+                                              FlLine(
+                                                color: Colors.grey.withOpacity(
+                                                  0.3,
+                                                ),
+                                                strokeWidth: 1,
+                                              ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    '${DateFormat('dd MMM').format(weekStart)} - ${DateFormat('dd MMM yyyy').format(weekEnd)}',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                        ),
                       ),
-                      const SizedBox(height: 30),
-                      // Grafik Mingguan Ketiga
-                      _buildWeeklyChart(
-                        weekLabel: '23/06/25-28/06/25',
-                        data: const [1.0, 7.0, 9.0, 3.0, 6.0, 4.0],
-                        maxHeight: 10,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+                    ),
             ),
           ],
         ),
@@ -92,145 +321,9 @@ class AssistantStatsPage extends StatelessWidget {
     );
   }
 
-  // Widget pembangun untuk setiap grafik batang mingguan
-  Widget _buildWeeklyChart({
-    required String weekLabel,
-    required List<double> data,
-    required double maxHeight,
-  }) {
-    final List<String> dayLabels = [
-      'Senin',
-      'Selasa',
-      'Rabu',
-      'Kamis',
-      'Jumat',
-      'Sabtu',
-    ];
-    final List<Color> barColors = [
-      const Color(0xFFD7B899),
-      const Color(0xFFC69C6D),
-      const Color(0xFFA9746E),
-      const Color(0xFF855E42),
-      const Color(0xFF5C4033),
-      const Color(0xFF3B2F2F),
-    ];
-
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          SizedBox(
-            height: 150, // Tinggi area grafik
-            child: Stack(
-              children: [
-                // Y-axis Labels
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  child: Text(
-                    maxHeight.toStringAsFixed(0),
-                    style: const TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w400,
-                      color: Colors.black,
-                    ),
-                  ),
-                ),
-                Positioned(
-                  bottom: 0,
-                  left: 0,
-                  child: const Text(
-                    '0',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w400,
-                      color: Colors.black,
-                    ),
-                  ),
-                ),
-                // Graph bars
-                Positioned(
-                  bottom: 0,
-                  left:
-                      30, // Geser grafik agar tidak bertumpang tindih dengan label Y-axis
-                  right: 0,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: List.generate(data.length, (index) {
-                      final double barHeight = data[index] / maxHeight * 120;
-                      return Expanded(
-                        // **PERUBAHAN DISINI:** Menggunakan Expanded
-                        child: Center(
-                          child: Container(
-                            width: 30,
-                            height: barHeight,
-                            decoration: BoxDecoration(
-                              color: barColors[index],
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.1),
-                                  blurRadius: 2,
-                                  offset: const Offset(0, 1),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      );
-                    }),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // Day labels
-          const SizedBox(height: 5), // Jarak antara grafik dan label hari
-          Padding(
-            padding: const EdgeInsets.only(
-              left: 30,
-            ), // Geser label hari agar sejajar dengan grafik
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: List.generate(dayLabels.length, (index) {
-                return Expanded(
-                  // **PERUBAHAN DISINI:** Menggunakan Expanded
-                  child: Text(
-                    dayLabels[index],
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w400,
-                      color: Colors.black,
-                    ),
-                  ),
-                );
-              }),
-            ),
-          ),
-          const SizedBox(height: 20),
-          // Label rentang minggu
-          Text(
-            weekLabel,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: Colors.black,
-            ),
-          ),
-        ],
-      ),
-    );
+  // Widget pembangun untuk grafik batang mingguan yang tidak terpakai, bisa dihapus.
+  // @Deprecated('This widget is no longer used. The chart is built directly in the main build method.')
+  Widget _buildWeeklyChart() {
+    return const SizedBox.shrink();
   }
 }
