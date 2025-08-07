@@ -10,7 +10,7 @@ class TambahJadwalPage extends StatefulWidget {
 }
 
 class _TambahJadwalPageState extends State<TambahJadwalPage> {
-  // Controllers untuk input text fields
+  // Controllers for text input fields
   final TextEditingController namaController = TextEditingController();
   final TextEditingController tanggalController = TextEditingController();
   final TextEditingController tempatController = TextEditingController();
@@ -19,27 +19,27 @@ class _TambahJadwalPageState extends State<TambahJadwalPage> {
   @override
   void initState() {
     super.initState();
-    // Mengatur teks awal untuk tanggal menjadi tanggal hari ini
+    // Set initial text for the date field to today's date
     // Format: DD/MM/YYYY
     tanggalController.text =
         "${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year}";
   }
 
-  // Fungsi untuk mengurai string tanggal "DD/MM/YYYY" menjadi objek DateTime
+  // Function to parse a "DD/MM/YYYY" date string into a DateTime object
   DateTime _parseDate(String input) {
-    // Memisahkan string berdasarkan karakter '/'
+    // Split the string by '/'
     final parts = input.split('/');
-    // Mengonversi bagian-bagian string menjadi integer
+    // Convert the string parts to integers
     final day = int.parse(parts[0]);
     final month = int.parse(parts[1]);
     final year = int.parse(parts[2]);
-    // Mengembalikan objek DateTime
+    // Return the DateTime object
     return DateTime(year, month, day);
   }
 
   @override
   void dispose() {
-    // Penting: Membuang controllers untuk mencegah kebocoran memori
+    // Important: Dispose controllers to prevent memory leaks
     namaController.dispose();
     tanggalController.dispose();
     tempatController.dispose();
@@ -47,9 +47,9 @@ class _TambahJadwalPageState extends State<TambahJadwalPage> {
     super.dispose();
   }
 
-  // Fungsi untuk menampilkan snackbar (pengganti alert)
+  // Function to show a snackbar (alternative to alert)
   void _showSnackBar(String message, {bool isError = false}) {
-    // Pastikan widget masih ada di widget tree sebelum menampilkan snackbar
+    // Ensure the widget is still in the widget tree before showing the snackbar
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -88,8 +88,8 @@ class _TambahJadwalPageState extends State<TambahJadwalPage> {
                 children: [
                   GestureDetector(
                     onTap: () {
-                      // Menggunakan pushReplacement untuk kembali ke halaman AdminHomePage
-                      // ini akan menggantikan rute saat ini di stack navigasi
+                      // Use pushReplacement to return to the AdminHomePage
+                      // This will replace the current route in the navigation stack
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
@@ -99,7 +99,7 @@ class _TambahJadwalPageState extends State<TambahJadwalPage> {
                       );
                     },
                     child: Image.asset(
-                      'assets/icons/kembali.png', // Pastikan path aset ini benar
+                      'assets/icons/kembali.png', // Ensure this asset path is correct
                       width: 24,
                       height: 24,
                     ),
@@ -124,7 +124,7 @@ class _TambahJadwalPageState extends State<TambahJadwalPage> {
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
-                    const SizedBox(height: 70), // Jarak dari AppBar
+                    const SizedBox(height: 70), // Spacing from AppBar
                     _inputField('Nama Kegiatan', namaController),
                     _inputField('Tanggal', tanggalController),
                     _inputField('Tempat', tempatController),
@@ -141,31 +141,31 @@ class _TambahJadwalPageState extends State<TambahJadwalPage> {
                           ),
                         ),
                         onPressed: () async {
-                          // Inisialisasi klien Supabase
+                          // Initialize Supabase client
                           final supabase = Supabase.instance.client;
 
                           try {
-                            // Memasukkan data ke tabel 'jadwal_kegiatan'
-                            // Supabase secara otomatis akan mengonversi DateTime ke tipe 'date' atau 'timestamp'
+                            // Insert data into the 'jadwal_kegiatan' table
+                            // Supabase will automatically convert DateTime to 'date' or 'timestamp' type
                             await supabase.from('jadwal_kegiatan').insert({
                               'nama': namaController.text,
                               'tanggal': _parseDate(
                                 tanggalController.text,
-                              ).toIso8601String(), // Konversi ke ISO 8601 string untuk konsistensi
+                              ).toIso8601String(), // Convert to ISO 8601 string for consistency
                               'tempat': tempatController.text,
                               'waktu': waktuController.text,
                               'user_id': supabase.auth.currentUser!.id,
                             });
 
-                            // Menampilkan snackbar sukses
+                            // Show success snackbar
                             _showSnackBar('Jadwal berhasil ditambahkan');
 
-                            // Kembali ke halaman sebelumnya setelah berhasil menyimpan
-                            // Pastikan widget masih ada sebelum pop
+                            // Go back to the previous page after successful save
+                            // Ensure the widget is still mounted before popping
                             if (!mounted) return;
                             Navigator.pop(context);
                           } catch (e) {
-                            // Menampilkan snackbar error jika terjadi kesalahan
+                            // Show error snackbar if an error occurs
                             _showSnackBar(
                               'Gagal menambahkan jadwal: $e',
                               isError: true,
@@ -193,7 +193,7 @@ class _TambahJadwalPageState extends State<TambahJadwalPage> {
     );
   }
 
-  // Widget pembantu untuk membuat field input teks
+  // Helper widget to create a text input field
   Widget _inputField(String label, TextEditingController controller) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -214,26 +214,56 @@ class _TambahJadwalPageState extends State<TambahJadwalPage> {
             controller: controller,
             cursorColor: Colors.black,
             style: const TextStyle(fontSize: 13),
-            // Jika label adalah 'Tanggal', maka field akan readOnly agar hanya bisa dipilih dari date picker
-            // Jika tidak, field bisa diedit manual
+            // If the label is 'Tanggal', the field will be readOnly so it can only be selected from the date picker
+            // Otherwise, the field can be edited manually
             readOnly: label == 'Tanggal',
             onTap:
                 label ==
-                    'Tanggal' // Menambahkan onTap agar date picker muncul saat di-tap
+                    'Tanggal' // Add onTap so the date picker appears when tapped
                 ? () async {
-                    DateTime? pickedDate = await showDatePicker(
+                    // Use a custom theme for the date picker
+                    DateTime? pickedDate = await showDialog<DateTime>(
                       context: context,
-                      initialDate: _parseDate(
-                        tanggalController.text,
-                      ), // Set initial date from current value
-                      firstDate: DateTime(2000),
-                      lastDate: DateTime(2100),
+                      builder: (BuildContext context) {
+                        return Theme(
+                          // Apply the custom theme here
+                          data: ThemeData(
+                            colorScheme: ColorScheme.light(
+                              primary: const Color(
+                                0xFF4B2E2B,
+                              ), // Header color and selected date
+                              onPrimary: Colors
+                                  .white, // Text color on primary background
+                              onSurface: const Color(
+                                0xFF4B2E2B,
+                              ), // Text color on calendar surface
+                            ),
+                            textButtonTheme: TextButtonThemeData(
+                              style: TextButton.styleFrom(
+                                foregroundColor: const Color(
+                                  0xFF4B2E2B,
+                                ), // Button text color
+                              ),
+                            ),
+                            // You can add more theme customizations here if needed
+                            // For example, you can also customize the background color, etc.
+                          ),
+                          child: DatePickerDialog(
+                            initialDate: _parseDate(
+                              tanggalController.text,
+                            ), // Set initial date from current value
+                            firstDate: DateTime(2000),
+                            lastDate: DateTime(2100),
+                          ),
+                        );
+                      },
                     );
+
                     if (pickedDate != null) {
-                      // Format tanggal ke DD/MM/YYYY
+                      // Format the date to DD/MM/YYYY
                       String formattedDate =
                           "${pickedDate.day}/${pickedDate.month}/${pickedDate.year}";
-                      // Memperbarui controller teks dengan tanggal yang dipilih
+                      // Update the text controller with the selected date
                       setState(() {
                         controller.text = formattedDate;
                       });
@@ -251,7 +281,7 @@ class _TambahJadwalPageState extends State<TambahJadwalPage> {
                 borderRadius: BorderRadius.circular(8),
                 borderSide: BorderSide.none,
               ),
-              // Menampilkan ikon kalender hanya untuk field 'Tanggal'
+              // Show the calendar icon only for the 'Tanggal' field
               suffixIcon: label == 'Tanggal'
                   ? const Icon(
                       Icons.calendar_today,
