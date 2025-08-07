@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart'; // Untuk format tanggal
+import 'package:supabase_flutter/supabase_flutter.dart'; // Import Supabase
 
 class DailyActivityPage extends StatefulWidget {
   const DailyActivityPage({super.key});
@@ -19,6 +20,9 @@ class _DailyActivityPageState extends State<DailyActivityPage> {
 
   // Variabel untuk menyimpan tanggal yang dipilih
   DateTime? _selectedDate;
+
+  // Inisialisasi Supabase client
+  final SupabaseClient supabase = Supabase.instance.client;
 
   @override
   void dispose() {
@@ -57,8 +61,79 @@ class _DailyActivityPageState extends State<DailyActivityPage> {
         _selectedDate = picked;
         _tanggalController.text = DateFormat(
           'dd MMMM yyyy',
-        ).format(picked); // Format tanggal
+        ).format(picked); // Format tanggal untuk ditampilkan di UI
       });
+    }
+  }
+
+  // Fungsi untuk menyimpan data ke Supabase
+  Future<void> _saveActivityToSupabase() async {
+    // Validasi input
+    if (_jenisKegiatanController.text.isEmpty ||
+        _deskripsiAktivitasController.text.isEmpty ||
+        _lamaWaktuController.text.isEmpty ||
+        _tanggalController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Semua field harus diisi!'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    try {
+      // Mengambil nilai dari controller
+      final String activityKind = _jenisKegiatanController.text;
+      final String activityDescription = _deskripsiAktivitasController.text;
+      final double timeLength = double.parse(
+        _lamaWaktuController.text,
+      ); // Pastikan ini bisa di-parse sebagai double
+      final String date = DateFormat(
+        'yyyy-MM-dd',
+      ).format(_selectedDate!); // Format tanggal untuk Supabase
+
+      // Menyisipkan data ke tabel 'users_contribution'
+      await supabase.from('users_contribution').insert({
+        'activity_kind': activityKind,
+        'activity_description': activityDescription,
+        'time_length': timeLength,
+        'date': date,
+      });
+
+      // Tampilkan SnackBar sukses
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Aktivitas Berhasil Ditambahkan!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      // Kosongkan field setelah ditambah
+      _jenisKegiatanController.clear();
+      _deskripsiAktivitasController.clear();
+      _lamaWaktuController.clear();
+      _tanggalController.clear();
+      setState(() {
+        _selectedDate = null;
+      });
+    } on FormatException {
+      // Tangani error jika lama waktu tidak bisa di-parse sebagai double
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Lama waktu harus berupa angka (mis: 2.5)!'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } catch (e) {
+      // Tangani error lain dari Supabase
+      debugPrint('Error saving to Supabase: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal menambahkan aktivitas: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -119,10 +194,10 @@ class _DailyActivityPageState extends State<DailyActivityPage> {
               // Input Lama Waktu
               _buildInputField(
                 controller: _lamaWaktuController,
-                label: 'Lama waktu',
-                hintText: 'Mis: 2 jam, 30 menit',
-                keyboardType: TextInputType
-                    .text, // Teks biasa karena bisa "jam" atau "menit"
+                label: 'Lama waktu (Jam)',
+                hintText: 'Gunakan bilangan bulat/desimal (mis : 2.5)',
+                keyboardType:
+                    TextInputType.number, // Ubah ke number untuk input angka
               ),
               const SizedBox(height: 20),
 
@@ -141,35 +216,8 @@ class _DailyActivityPageState extends State<DailyActivityPage> {
               // Tombol "Tambah"
               Center(
                 child: ElevatedButton(
-                  onPressed: () {
-                    // Logika yang dijalankan saat tombol "Tambah" ditekan
-                    // Anda bisa mendapatkan nilai dari controller:
-                    final String jenisKegiatan = _jenisKegiatanController.text;
-                    final String deskripsiAktivitas =
-                        _deskripsiAktivitasController.text;
-                    final String lamaWaktu = _lamaWaktuController.text;
-                    final String tanggal = _tanggalController.text;
-
-                    debugPrint('Jenis Kegiatan: $jenisKegiatan');
-                    debugPrint('Deskripsi Aktivitas: $deskripsiAktivitas');
-                    debugPrint('Lama Waktu: $lamaWaktu');
-                    debugPrint('Tanggal: $tanggal');
-
-                    // Tampilkan SnackBar atau lakukan navigasi/simpan data
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Aktivitas Berhasil Ditambahkan!'),
-                      ),
-                    );
-                    // Opsional: Kosongkan field setelah ditambah
-                    _jenisKegiatanController.clear();
-                    _deskripsiAktivitasController.clear();
-                    _lamaWaktuController.clear();
-                    _tanggalController.clear();
-                    setState(() {
-                      _selectedDate = null;
-                    });
-                  },
+                  onPressed:
+                      _saveActivityToSupabase, // Panggil fungsi penyimpanan data
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF5E4036),
                     foregroundColor: Colors.white,
