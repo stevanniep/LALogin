@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-// Halaman Riwayat Aktivitas
 class ActivityHistoryPage extends StatefulWidget {
   const ActivityHistoryPage({super.key});
 
@@ -10,44 +9,27 @@ class ActivityHistoryPage extends StatefulWidget {
 }
 
 class _ActivityHistoryPageState extends State<ActivityHistoryPage> {
-  // Inisialisasi Supabase client
   final SupabaseClient _supabase = Supabase.instance.client;
-
-  // Future untuk menyimpan hasil pengambilan data aktivitas
   late Future<List<Map<String, dynamic>>> _futureActivities;
 
   @override
   void initState() {
     super.initState();
-    // Memuat data aktivitas saat widget diinisialisasi
     _futureActivities = _fetchActivities();
   }
 
-  // Fungsi asinkron untuk mengambil data aktivitas dari Supabase
   Future<List<Map<String, dynamic>>> _fetchActivities() async {
     try {
-      // Mendapatkan ID pengguna yang sedang login
       final userId = _supabase.auth.currentUser!.id;
-
-      // Melakukan kueri ke tabel 'contribution_history'
-      // dan melakukan JOIN dengan tabel 'users_contribution'
-      // Mengambil semua kolom dari kedua tabel
       final data = await _supabase
-          .from('contribution_history')
-          .select(
-            '*, users_contribution(*)',
-          ) // Mengambil semua kolom dari contribution_history dan users_contribution
-          .eq('user_id', userId) // Memfilter berdasarkan user yang sedang login
-          .order(
-            'date',
-            ascending: false,
-          ); // Mengurutkan berdasarkan tanggal terbaru
-
+          .from('users_contribution')
+          .select()
+          .eq('user_id', userId)
+          .order('date', ascending: false);
       return data;
     } catch (e) {
-      // Menangani error jika terjadi masalah saat mengambil data
       print('Error fetching activities: $e');
-      return []; // Mengembalikan list kosong jika ada error
+      return [];
     }
   }
 
@@ -58,7 +40,6 @@ class _ActivityHistoryPageState extends State<ActivityHistoryPage> {
       body: SafeArea(
         child: Column(
           children: [
-            // Custom AppBar
             Container(
               padding: const EdgeInsets.only(
                 top: 12,
@@ -82,7 +63,6 @@ class _ActivityHistoryPageState extends State<ActivityHistoryPage> {
                     onTap: () {
                       Navigator.of(context).pop();
                     },
-                    // Ganti dengan path aset yang benar untuk ikon kembali Anda
                     child: Image.asset(
                       'assets/icons/kembali.png',
                       width: 24,
@@ -102,30 +82,22 @@ class _ActivityHistoryPageState extends State<ActivityHistoryPage> {
                 ],
               ),
             ),
-            // Body Content
+            // Konten utama
             Expanded(
-              // Menggunakan FutureBuilder untuk menampilkan data secara asinkron
               child: FutureBuilder<List<Map<String, dynamic>>>(
                 future: _futureActivities,
                 builder: (context, snapshot) {
-                  // Menampilkan indikator loading saat data sedang dimuat
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
-                  }
-                  // Menampilkan pesan error jika terjadi kesalahan
-                  else if (snapshot.hasError) {
+                  } else if (snapshot.hasError) {
                     return Center(
                       child: Text('Terjadi error: ${snapshot.error}'),
                     );
-                  }
-                  // Menampilkan pesan jika tidak ada data
-                  else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
                     return const Center(
                       child: Text('Tidak ada riwayat aktivitas.'),
                     );
-                  }
-                  // Menampilkan daftar aktivitas jika data berhasil dimuat
-                  else {
+                  } else {
                     final activities = snapshot.data!;
                     return Padding(
                       padding: const EdgeInsets.all(20.0),
@@ -135,25 +107,15 @@ class _ActivityHistoryPageState extends State<ActivityHistoryPage> {
                             const SizedBox(height: 15),
                         itemBuilder: (context, index) {
                           final activity = activities[index];
-                          // Mengakses data dari tabel users_contribution yang digabungkan
-                          final contribution = activity['users_contribution'];
-
-                          // Pastikan data 'contribution' tidak null sebelum mengaksesnya
-                          if (contribution == null) {
-                            return const SizedBox.shrink(); // Atau tampilkan placeholder
-                          }
 
                           return _buildActivityItem(
-                            title:
-                                contribution['activity_kind'] as String? ??
-                                'N/A',
+                            title: activity['activity_kind'] as String? ?? 'N/A',
                             description:
-                                contribution['activity_desc'] as String? ??
-                                'Tidak ada deskripsi',
+                                activity['activity_description'] as String? ??
+                                    'Tidak ada deskripsi',
                             duration:
-                                '${contribution['time_length'] as int? ?? 0} jam', // Sesuaikan format durasi
-                            date:
-                                contribution['date'] as String? ??
+                                '${(activity['time_length'] as num? ?? 0).toInt()} jam',
+                            date: activity['date'] as String? ??
                                 'Tanggal tidak diketahui',
                           );
                         },
@@ -169,7 +131,6 @@ class _ActivityHistoryPageState extends State<ActivityHistoryPage> {
     );
   }
 
-  // Widget pembangun untuk setiap item aktivitas
   Widget _buildActivityItem({
     required String title,
     required String description,
@@ -179,7 +140,7 @@ class _ActivityHistoryPageState extends State<ActivityHistoryPage> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF4B2E2B), // Mengganti warna coklat
+        color: const Color(0xFF4B2E2B),
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(

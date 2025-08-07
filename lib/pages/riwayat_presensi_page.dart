@@ -91,22 +91,23 @@ class _RiwayatPresensiPageState extends State<RiwayatPresensiPage> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    offset: const Offset(0, 2),
-                    blurRadius: 4,
-                  ),
-                ],
+      backgroundColor: const Color(0xFFFAF9F9),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(60),
+        child: Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black26,
+                offset: Offset(0, 2),
+                blurRadius: 4,
               ),
+            ],
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 children: [
                   GestureDetector(
@@ -114,8 +115,7 @@ class _RiwayatPresensiPageState extends State<RiwayatPresensiPage> {
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
-                          builder: (context) =>
-                              const HomePage(initialIndex: 2),
+                          builder: (context) => const HomePage(initialIndex: 2),
                         ),
                       );
                     },
@@ -130,14 +130,21 @@ class _RiwayatPresensiPageState extends State<RiwayatPresensiPage> {
                     'Riwayat Presensi',
                     style: TextStyle(
                       fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w700,
-                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
                       color: Color(0xFF4B2E2B),
                     ),
                   ),
                 ],
               ),
             ),
+          ),
+        ),
+      ),
+
+      body: SafeArea(
+        child: Column(
+          children: [
             Expanded(
               child: FutureBuilder<Map<String, dynamic>>(
                 future: data,

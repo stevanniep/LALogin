@@ -38,7 +38,6 @@ class _AdminPresensiState extends State<AdminPresensi> {
     super.dispose();
   }
 
-  // Fungsi untuk memilih tanggal, disesuaikan dengan tema
   Future<void> pilihTanggal() async {
     final picked = await showDatePicker(
       context: context,
@@ -77,10 +76,10 @@ class _AdminPresensiState extends State<AdminPresensi> {
         return Theme(
           data: ThemeData.light().copyWith(
             colorScheme: const ColorScheme.light(
-              primary: Color(0xFF4B2E2B), // Warna utama time picker
-              onPrimary: Colors.white, // Warna teks pada header
-              surface: Colors.white, // Warna latar belakang time picker
-              onSurface: Colors.black, // Warna teks pada jam
+              primary: Color(0xFF4B2E2B), 
+              onPrimary: Colors.white, 
+              surface: Colors.white, 
+              onSurface: Colors.black,
             ),
           ),
           child: child!,
@@ -159,7 +158,6 @@ class _AdminPresensiState extends State<AdminPresensi> {
     );
   }
 
-  // Widget pembantu untuk field input teks
   Widget _buildField(
     String label,
     TextEditingController controller,
@@ -210,7 +208,6 @@ class _AdminPresensiState extends State<AdminPresensi> {
     );
   }
 
-  // Widget pembantu untuk DropdownButtonFormField
   Widget _buildDropdownField(
     String label,
     String? value,
@@ -272,11 +269,10 @@ class _AdminPresensiState extends State<AdminPresensi> {
     final jenis = jenisController.text;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFAF9F9),
       body: SafeArea(
         child: Column(
           children: [
-            // AppBar yang sudah diubah
             Container(
               padding: const EdgeInsets.only(
                 top: 12,
@@ -288,7 +284,7 @@ class _AdminPresensiState extends State<AdminPresensi> {
                 color: Colors.white,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black26,
                     offset: const Offset(0, 2),
                     blurRadius: 4,
                   ),
@@ -341,7 +337,7 @@ class _AdminPresensiState extends State<AdminPresensi> {
                     ),
 
                     if (jenis == 'harian') ...[
-                      // Dropdown untuk Hari
+            
                       _buildDropdownField(
                         'Pilih Hari',
                         hariController.text.isEmpty
@@ -352,14 +348,12 @@ class _AdminPresensiState extends State<AdminPresensi> {
                             setState(() => hariController.text = val ?? ''),
                       ),
                     ] else
-                      // Input Judul Event
                       _buildField(
                         'Judul Event',
                         judulController,
                         'Masukkan nama event',
                       ),
 
-                    // Input Tanggal
                     _buildField(
                       'Tanggal',
                       tanggalController,
@@ -373,7 +367,6 @@ class _AdminPresensiState extends State<AdminPresensi> {
                       ),
                     ),
 
-                    // Input Waktu
                     _buildField(
                       'Waktu',
                       waktuController,
@@ -387,7 +380,6 @@ class _AdminPresensiState extends State<AdminPresensi> {
                       ),
                     ),
 
-                    // Input Tempat
                     _buildField('Tempat', tempatController, 'Masukkan tempat'),
 
                     const SizedBox(height: 30),

@@ -151,18 +151,6 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
               ),
 
               _buildCard(
-                icon: 'kehadiran.png',
-                label: 'Kehadiran',
-                trailing: const Text("100%"),
-              ),
-
-              _buildCard(
-                icon: 'aktivitas.png',
-                label: 'Aktivitas',
-                child: SizedBox(height: 150, child: _buildActivityChart()),
-              ),
-
-              _buildCard(
                 icon: 'edit_profil.png',
                 label: 'Edit Profil',
                 onTap: () => Navigator.push(

@@ -42,7 +42,6 @@ class _ScanPageState extends State<ScanPage> {
         return;
       }
 
-      // Asumsikan format QR: UUID + timestamp → ambil UUID-nya saja
       final parts = raw.split('-');
       if (parts.length < 5) {
         _showDialog('Scan Gagal', 'Format QR tidak valid.');
@@ -59,7 +58,6 @@ class _ScanPageState extends State<ScanPage> {
       try {
         final supabase = Supabase.instance.client;
 
-        // Cek apakah event ada
         final event = await supabase
             .from('events')
             .select('id, expired_at')
@@ -71,14 +69,12 @@ class _ScanPageState extends State<ScanPage> {
           return;
         }
 
-        // Cek apakah QR sudah expired
         final expiredAt = DateTime.tryParse(event['expired_at']);
         if (expiredAt != null && DateTime.now().isAfter(expiredAt)) {
           _showDialog('Scan Gagal', 'QR sudah kedaluwarsa.');
           return;
         }
 
-        // Cek apakah user sudah presensi
         final existing = await supabase
             .from('attendance')
             .select('id')
@@ -87,14 +83,10 @@ class _ScanPageState extends State<ScanPage> {
             .maybeSingle();
 
         if (existing != null) {
-          _showDialog(
-            'Sudah Presensi',
-            'Kamu sudah melakukan presensi untuk event ini.',
-          );
+          _showDialog('Sudah Presensi', 'Kamu sudah presensi event ini.');
           return;
         }
 
-        // Simpan presensi
         await supabase.from('attendance').insert({
           'user_id': userId,
           'event_id': eventId,
@@ -139,7 +131,7 @@ class _ScanPageState extends State<ScanPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFAF9F9),
       body: SafeArea(
         child: Column(
           children: [
@@ -147,7 +139,7 @@ class _ScanPageState extends State<ScanPage> {
               height: 47,
               width: double.infinity,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: const Color(0xFF4B2E2B),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.1),
@@ -157,15 +149,16 @@ class _ScanPageState extends State<ScanPage> {
                 ],
               ),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     GestureDetector(
                       onTap: () {
                         Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const HomePage(),
+                            builder: (context) => const HomePage(initialIndex: 2),
                           ),
                         );
                       },
@@ -175,14 +168,14 @@ class _ScanPageState extends State<ScanPage> {
                         height: 24,
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 12),
                     const Text(
                       'Presensi QR',
                       style: TextStyle(
                         fontFamily: 'Poppins',
-                        fontSize: 16,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF4B2E2B),
+                        fontSize: 16,
+                        color: Color(0xFFFFFFFF),
                       ),
                     ),
                   ],
@@ -192,9 +185,8 @@ class _ScanPageState extends State<ScanPage> {
             Expanded(
               child: SingleChildScrollView(
                 child: Padding(
-                  padding: const EdgeInsets.all(16.0),
+                  padding: const EdgeInsets.all(16),
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       const SizedBox(height: 40),
