@@ -109,13 +109,17 @@ class _ActivityHistoryPageState extends State<ActivityHistoryPage> {
                           final activity = activities[index];
 
                           return _buildActivityItem(
-                            title: activity['activity_kind'] as String? ?? 'N/A',
+                            title:
+                                activity['activity_kind'] as String? ?? 'N/A',
                             description:
                                 activity['activity_description'] as String? ??
-                                    'Tidak ada deskripsi',
-                            duration:
-                                '${(activity['time_length'] as num? ?? 0).toInt()} jam',
-                            date: activity['date'] as String? ??
+                                'Tidak ada deskripsi',
+                            duration: _formatTimeLength(
+                              (activity['time_length'] as num? ?? 0).toDouble(),
+                            ),
+
+                            date:
+                                activity['date'] as String? ??
                                 'Tanggal tidak diketahui',
                           );
                         },
@@ -129,6 +133,22 @@ class _ActivityHistoryPageState extends State<ActivityHistoryPage> {
         ),
       ),
     );
+  }
+
+  String _formatTimeLength(double timeLength) {
+    if (timeLength < 1) {
+      return '${(timeLength * 60).round()} menit';
+    } else if (timeLength == 1.0) {
+      return '1 jam';
+    } else {
+      int hours = timeLength.floor();
+      int minutes = ((timeLength - hours) * 60).round();
+      if (minutes == 0) {
+        return '$hours jam';
+      } else {
+        return '$hours jam $minutes menit';
+      }
+    }
   }
 
   Widget _buildActivityItem({
