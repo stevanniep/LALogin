@@ -254,12 +254,36 @@ class _TambahProyekPageState extends State<TambahProyekPage> {
             // Menambahkan onTap agar date picker muncul saat di-tap jika ini adalah field tanggal
             onTap: isTanggal
                 ? () async {
-                    DateTime? pickedDate = await showDatePicker(
+                    DateTime? pickedDate = await showDialog<DateTime>(
                       context: context,
-                      // Menggunakan _parseDate untuk mengatur initialDate dari nilai controller saat ini
-                      initialDate: _parseDate(controller.text),
-                      firstDate: DateTime(2000),
-                      lastDate: DateTime(2100),
+                      builder: (BuildContext context) {
+                        return Theme(
+                          data: ThemeData(
+                            colorScheme: ColorScheme.light(
+                              primary: const Color(
+                                0xFF4B2E2B,
+                              ), // Header color and selected date
+                              onPrimary: Colors
+                                  .white, // Text color on primary background
+                              onSurface: const Color(
+                                0xFF4B2E2B,
+                              ), // Text color on calendar surface
+                            ),
+                            textButtonTheme: TextButtonThemeData(
+                              style: TextButton.styleFrom(
+                                foregroundColor: const Color(
+                                  0xFF4B2E2B,
+                                ), // Button text color
+                              ),
+                            ),
+                          ),
+                          child: DatePickerDialog(
+                            initialDate: _parseDate(controller.text),
+                            firstDate: DateTime(2000),
+                            lastDate: DateTime(2100),
+                          ),
+                        );
+                      },
                     );
                     if (pickedDate != null) {
                       // Format tanggal yang dipilih ke DD/MM/YYYY
