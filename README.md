@@ -75,7 +75,6 @@
 - **Flutter** – UI Framework untuk pengembangan aplikasi mobile.
 - **Supabase** – Backend sebagai layanan (Auth, Database, dan Storage).
 - **SMTP Brevo** – Untuk pengiriman tautan verifikasi OTP.
-- **Google Drive** – Distribusi file APK.
 - **GitHub** – Manajemen source code dan dokumentasi.
 
 ---
