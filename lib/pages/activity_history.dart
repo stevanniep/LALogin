@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-// Activity History Page
 class ActivityHistoryPage extends StatefulWidget {
   const ActivityHistoryPage({super.key});
 
@@ -10,38 +9,27 @@ class ActivityHistoryPage extends StatefulWidget {
 }
 
 class _ActivityHistoryPageState extends State<ActivityHistoryPage> {
-  // Initialize Supabase client
   final SupabaseClient _supabase = Supabase.instance.client;
-
-  // Future to store the activity data retrieval result
   late Future<List<Map<String, dynamic>>> _futureActivities;
 
   @override
   void initState() {
     super.initState();
-    // Load activity data when the widget is initialized
     _futureActivities = _fetchActivities();
   }
 
-  // Asynchronous function to fetch activity data from Supabase
   Future<List<Map<String, dynamic>>> _fetchActivities() async {
     try {
-      // Get the ID of the logged-in user
       final userId = _supabase.auth.currentUser!.id;
-
-      // Query the 'users_contribution' table
-      // Filter by the logged-in user's ID
       final data = await _supabase
           .from('users_contribution')
-          .select() // Select all columns
-          .eq('user_id', userId) // Filter based on the logged-in user
-          .order('date', ascending: false); // Sort by the latest date
-
+          .select()
+          .eq('user_id', userId)
+          .order('date', ascending: false);
       return data;
     } catch (e) {
-      // Handle errors if there's a problem retrieving data
       print('Error fetching activities: $e');
-      return []; // Return an empty list if an error occurs
+      return [];
     }
   }
 
@@ -52,7 +40,6 @@ class _ActivityHistoryPageState extends State<ActivityHistoryPage> {
       body: SafeArea(
         child: Column(
           children: [
-            // Custom AppBar
             Container(
               padding: const EdgeInsets.only(
                 top: 12,
@@ -95,30 +82,22 @@ class _ActivityHistoryPageState extends State<ActivityHistoryPage> {
                 ],
               ),
             ),
-            // Body Content
+            // Konten utama
             Expanded(
-              // Use FutureBuilder to display data asynchronously
               child: FutureBuilder<List<Map<String, dynamic>>>(
                 future: _futureActivities,
                 builder: (context, snapshot) {
-                  // Display a loading indicator when data is being loaded
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
-                  }
-                  // Display an error message if an error occurs
-                  else if (snapshot.hasError) {
+                  } else if (snapshot.hasError) {
                     return Center(
                       child: Text('Terjadi error: ${snapshot.error}'),
                     );
-                  }
-                  // Display a message if there is no data
-                  else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
                     return const Center(
                       child: Text('Tidak ada riwayat aktivitas.'),
                     );
-                  }
-                  // Display the list of activities if data is successfully loaded
-                  else {
+                  } else {
                     final activities = snapshot.data!;
                     return Padding(
                       padding: const EdgeInsets.all(20.0),
@@ -129,15 +108,16 @@ class _ActivityHistoryPageState extends State<ActivityHistoryPage> {
                         itemBuilder: (context, index) {
                           final activity = activities[index];
 
-                          // The data is now directly from 'users_contribution'
                           return _buildActivityItem(
                             title:
                                 activity['activity_kind'] as String? ?? 'N/A',
                             description:
                                 activity['activity_description'] as String? ??
                                 'Tidak ada deskripsi',
-                            duration:
-                                '${(activity['time_length'] as num? ?? 0).toInt()} jam',
+                            duration: _formatTimeLength(
+                              (activity['time_length'] as num? ?? 0).toDouble(),
+                            ),
+
                             date:
                                 activity['date'] as String? ??
                                 'Tanggal tidak diketahui',
@@ -155,7 +135,22 @@ class _ActivityHistoryPageState extends State<ActivityHistoryPage> {
     );
   }
 
-  // Builder widget for each activity item
+  String _formatTimeLength(double timeLength) {
+    if (timeLength < 1) {
+      return '${(timeLength * 60).round()} menit';
+    } else if (timeLength == 1.0) {
+      return '1 jam';
+    } else {
+      int hours = timeLength.floor();
+      int minutes = ((timeLength - hours) * 60).round();
+      if (minutes == 0) {
+        return '$hours jam';
+      } else {
+        return '$hours jam $minutes menit';
+      }
+    }
+  }
+
   Widget _buildActivityItem({
     required String title,
     required String description,
@@ -165,7 +160,7 @@ class _ActivityHistoryPageState extends State<ActivityHistoryPage> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF4B2E2B), // Replacing the brown color
+        color: const Color(0xFF4B2E2B),
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(

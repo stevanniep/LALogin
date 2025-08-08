@@ -92,16 +92,55 @@ class _AdminQRPageState extends State<AdminQRPage> {
     final namaKegiatan = eventData?['title'] ?? eventData?['day_of_week'] ?? 'Nama Kegiatan Tidak Diketahui';
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('QR Presensi'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (_) => const AdminHomePage(initialIndex: 0)),
-            );
-          },
+      backgroundColor: const Color(0xFFFAF9F9),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(60),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                offset: const Offset(0, 2),
+                blurRadius: 4,
+              ),
+            ],
+          ),
+          child: SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.only(
+                top: 12,
+                left: 16,
+                right: 16,
+                bottom: 12,
+              ),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.pop(context);
+                    },
+                    child: Image.asset(
+                      'assets/icons/kembali.png',
+                      width: 24,
+                      height: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Text(
+                    'QR Presensi',
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                      color: Color(0xFF4B2E2B),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
       body: isLoading
